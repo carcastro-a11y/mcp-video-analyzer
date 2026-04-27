@@ -4,6 +4,7 @@ import { UserError, imageContent } from 'fastmcp';
 import fs from 'fs';
 import { z } from 'zod';
 import { getAdapter } from '../adapters/adapter.interface.js';
+import { formatTaxonomyForPrompt, getTaxonomyByStroke } from '../data/swim-taxonomy.js';
 import { deduplicateFrames } from '../processors/frame-dedup.js';
 import {
   extractFrameBurst,
@@ -179,10 +180,17 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
           ? 'overall technique'
           : focus.map((f) => f.replace(/_/g, ' ')).join(', ');
 
-      const systemPrompt = `You are an expert swimming coach with deep knowledge of competitive swimming technique.
-You analyze video frames to provide specific, actionable technique feedback.
-Be precise about what you observe — reference body position, timing, and mechanics directly.
-Structure your feedback clearly with strengths, areas for improvement, and specific drills to fix issues.`;
+      const taxonomyEntries = getTaxonomyByStroke(stroke);
+      const taxonomySection = formatTaxonomyForPrompt(taxonomyEntries);
+
+      const systemPrompt =
+        `You are an expert swimming coach with deep knowledge of competitive swimming technique.\n` +
+        `You analyze video frames to provide specific, actionable technique feedback.\n` +
+        `Be precise about what you observe — reference body position, timing, and mechanics directly.\n` +
+        `Structure your feedback clearly with strengths, areas for improvement, and specific drills to fix issues.` +
+        (taxonomySection.length > 0
+          ? `\n\n---\n\n## Known common mistakes for this stroke\n\n${taxonomySection}`
+          : '');
 
       const userPrompt = `These are sequential frames from a ${strokeLabel} video.
 Please analyze the swimmer's ${focusLabel}.
