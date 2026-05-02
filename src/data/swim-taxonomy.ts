@@ -2,12 +2,25 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const IMAGES_DIR = path.join(fileURLToPath(new URL('.', import.meta.url)), 'swim-reference-images');
+const EXAMPLES_DIR = path.join(
+  fileURLToPath(new URL('.', import.meta.url)),
+  '..',
+  '..',
+  'examples',
+);
 
 const img = (...filenames: string[]) => filenames.map((f) => path.join(IMAGES_DIR, f));
+const example = (...parts: string[]) => path.join(EXAMPLES_DIR, ...parts);
 
 type Stroke = 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly';
 
-interface TaxonomyEntry {
+export interface ExampleGroup {
+  label: string;
+  description: string;
+  frames: string[];
+}
+
+export interface TaxonomyEntry {
   id: string;
   stroke: Stroke;
   title: string;
@@ -16,6 +29,8 @@ interface TaxonomyEntry {
   fix: string;
   drill: string;
   referenceImages?: string[];
+  badExamples?: ExampleGroup[];
+  goodExamples?: ExampleGroup[];
 }
 
 const SWIM_TAXONOMY: TaxonomyEntry[] = [
@@ -57,6 +72,103 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     drill:
       'Streamline kick on front (SLOF) – hold streamline, kick breaststroke, time your breathing lift without taking a pull. A pool noodle tucked under the hips helps beginners feel the correct position for a few laps.',
     referenceImages: img('Breaststroke-Body-Position-During-Breathing.png'),
+    badExamples: [
+      {
+        label: 'Sinking hips — seesaw effect',
+        description:
+          'Above-water and side-profile underwater views showing the classic seesaw: when the head or chest rises during the breath, the hips are forced down, dramatically increasing drag.',
+        frames: [
+          example('hip-position-bad', 'frame_01.png'),
+          example('hip-position-bad', 'frame_02.png'),
+          example('hip-position-bad', 'frame_04.png'),
+          example('hip-position-bad', 'frame_05.png'),
+        ],
+      },
+      {
+        label: 'Excessive hip flexion — piking during pull',
+        description:
+          'Close-up underwater shots showing hips piking sharply downward during the arm pull. Frames 6–8 show knees tucking far under the body during recovery — both create a wall of resistance.',
+        frames: [
+          example('hip-position-bad', 'frame_03.png'),
+          example('hip-position-bad', 'frame_04.png'),
+          example('hip-position-bad', 'frame_05.png'),
+          example('hip-position-bad', 'frame_06.png'),
+          example('hip-position-bad', 'frame_07.png'),
+          example('hip-position-bad', 'frame_08.png'),
+        ],
+      },
+      {
+        label: 'Hips too high — heels breaking the surface',
+        description:
+          'Heels break the surface on the breaststroke recovery (frame_07 has on-screen "HEELS UP" label). When heels come up, hips crest and kill horizontal momentum.',
+        frames: [
+          example('hip-position-bad', 'frame_07.png'),
+          example('hip-position-bad', 'frame_09.png'),
+          example('hip-position-bad', 'frame_10.png'),
+          example('hip-position-bad', 'frame_11.png'),
+        ],
+      },
+      {
+        label: 'Hip–kick timing mismatch',
+        description:
+          'Wall-turn sequence and arrow-annotated frames showing the kick firing while hips are still repositioning. Hands extend while hips are out of alignment — the hands and hips are not moving as a coordinated unit.',
+        frames: [
+          example('hip-position-bad', 'frame_12.png'),
+          example('hip-position-bad', 'frame_13.png'),
+          example('hip-position-bad', 'frame_14.png'),
+          example('hip-position-bad', 'frame_15.png'),
+          example('hip-position-bad', 'frame_16.png'),
+          example('hip-position-bad', 'frame_17.png'),
+          example('hip-position-bad', 'frame_18.png'),
+        ],
+      },
+    ],
+    goodExamples: [
+      {
+        label: 'Level alignment — hips at the waterline',
+        description:
+          'The polka-dot swimmer is the clearest example: hips sit right at the waterline, body perfectly parallel to the pool floor, nothing breaking the surface. Head-neutral position in frames 1 and 4 enables this — no chin-up means no hip drop.',
+        frames: [
+          example('hip-position-good', 'frame_01.png'),
+          example('hip-position-good', 'frame_04.png'),
+          example('hip-position-good', 'frame_09.png'),
+          example('hip-position-good', 'frame_10.png'),
+          example('hip-position-good', 'frame_11.png'),
+        ],
+      },
+      {
+        label: 'Controlled undulation — compact hip wave',
+        description:
+          "Breaststroke sequence showing a wave that stays contained within the body's own silhouette rather than diving below it. Frame 7 (butterfly swimmers from above) is particularly clear — the wake pattern is tight and narrow, meaning hip drive is going forward rather than up and down.",
+        frames: [
+          example('hip-position-good', 'frame_02.png'),
+          example('hip-position-good', 'frame_03.png'),
+          example('hip-position-good', 'frame_05.png'),
+          example('hip-position-good', 'frame_06.png'),
+          example('hip-position-good', 'frame_07.png'),
+        ],
+      },
+      {
+        label: 'Hip-driven rotation — hip leads the arm',
+        description:
+          "The polka-dot swimmer's freestyle shows the hip rolling before the arm finishes its entry. That sequencing — hip first, then arm pull — is the source of most of the power. Frame 13 shows the result: the arm reaches far forward precisely because the hip rotation created the space.",
+        frames: [
+          example('hip-position-good', 'frame_08.png'),
+          example('hip-position-good', 'frame_09.png'),
+          example('hip-position-good', 'frame_13.png'),
+        ],
+      },
+      {
+        label: 'Tight glide phase — full body extension',
+        description:
+          'During the breaststroke glide in frames 1 and 4, the hips are fully extended with no break at the waist. Frame 11 is the best single frame in this set: the body forms one completely straight line from fingertips to feet.',
+        frames: [
+          example('hip-position-good', 'frame_01.png'),
+          example('hip-position-good', 'frame_04.png'),
+          example('hip-position-good', 'frame_11.png'),
+        ],
+      },
+    ],
   },
   {
     id: 'breaststroke-breath-timing-006',
@@ -69,18 +181,6 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     fix: 'Exhale steadily into the water during the glide. Start the inhale as soon as the outsweep begins and your shoulders rise naturally. By the time your hands sweep inward, the breath should be done. Cue: "Breathe WITH the pull, not AFTER the pull."',
     drill:
       'Practice standing in shallow water doing the arm motion and timing the breath without the pressure of actually swimming.',
-  },
-  {
-    id: 'breaststroke-rushing-stroke-007',
-    stroke: 'breaststroke',
-    title: 'Rushing the Stroke (Skipping the Glide)',
-    description:
-      'Swimmer goes straight from kick into the next pull with zero pause. High stroke rate, lots of splashing, barely any forward movement.',
-    cause:
-      'Swimmers panic about losing momentum. Competitive swimmers sometimes confuse faster stroke rate with faster swimming. In breaststroke, distance per stroke matters more than turnover for most events.',
-    fix: 'Glide for one to two seconds after each kick. Count "one-Mississippi" in streamline before the next pull. For competitive swimmers: sprint breaststroke (50m) uses less glide than distance (200m), but even in a sprint the glide should never be zero.',
-    drill:
-      'Stroke count challenge – swim 25m and count your strokes, then repeat trying to reduce the count. This forces a longer glide and more distance per cycle.',
   },
 ];
 

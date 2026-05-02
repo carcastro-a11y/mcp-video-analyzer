@@ -14,6 +14,7 @@ import {
 import { optimizeFrames } from '../processors/image-optimizer.js';
 import type { IFrameResult } from '../types.js';
 import { createProgressReporter } from '../utils/progress.js';
+import { buildReferenceBlocks } from '../utils/reference-images.js';
 import { createTempDir } from '../utils/temp-files.js';
 
 const AnalyzeSwimStrokeSchema = z.object({
@@ -215,18 +216,29 @@ Provide your analysis in this structure:
 ### Summary
 (One paragraph coaching summary)`;
 
+      const referenceBlocks = buildReferenceBlocks(taxonomyEntries);
+
       const client = new Anthropic({ apiKey });
 
+      const userContent: Anthropic.ContentBlockParam[] = [];
+      if (referenceBlocks.length > 0) {
+        userContent.push({
+          type: 'text',
+          text: '## Reference Examples\nUse these labeled examples to calibrate your analysis:\n',
+        });
+        userContent.push(...referenceBlocks);
+        userContent.push({
+          type: 'text',
+          text: "\n## Video Frames\nNow analyze the following frames from the swimmer's video:\n",
+        });
+      }
+      userContent.push(...imageBlocks, { type: 'text', text: userPrompt });
+
       const response = await client.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-opus-4-7',
         max_tokens: 4096,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: [...imageBlocks, { type: 'text', text: userPrompt }],
-          },
-        ],
+        system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: userContent }],
       });
 
       await progress(95, 'Analysis complete, building report...');

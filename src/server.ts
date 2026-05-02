@@ -3,6 +3,7 @@ import { registerAdapter } from './adapters/adapter.interface.js';
 import { DirectAdapter } from './adapters/direct.adapter.js';
 import { LoomAdapter } from './adapters/loom.adapter.js';
 import { registerAnalyzeMoment } from './tools/analyze-moment.js';
+import { registerAnalyzeSwimPhoto } from './tools/analyze-swim-photo.js';
 import { registerAnalyzeSwimStroke } from './tools/analyze-swim-stroke.js';
 import { registerAnalyzeVideo } from './tools/analyze-video.js';
 import { registerGetFrameAt } from './tools/get-frame-at.js';
@@ -67,6 +68,7 @@ Decision flow:
   registerGetFrames(server);
   registerAnalyzeMoment(server);
   registerAnalyzeSwimStroke(server);
+  registerAnalyzeSwimPhoto(server);
 
   return server;
 }
