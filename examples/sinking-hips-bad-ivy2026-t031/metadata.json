@@ -1,0 +1,10 @@
+{
+  "source": "2026 Ivy League Championships 100Y Breaststroke",
+  "clip_timestamp": "0:31", "taxonomy_ids": ["breaststroke-sinking-hips-005"],
+  "quality": "bad", "lanes": [3],
+  "coach_notes": "Head position is correct but hips beginning to drop below waterline more consistently — seesaw pattern becoming recurring across stroke cycles.",
+  "camera_angle": "wide_spectator_stands",
+  "usable_for": [], "not_usable_for": ["any_individual_technique"],
+  "camera_limitation": "Swimmers are 20-40px. No individual technique detail resolvable.",
+  "burst_fps": 5, "burst_window": "0:29-0:33", "frame_count": 20
+}

@@ -1,0 +1,10 @@
+{
+  "source": "2026 Ivy League Championships 100Y Breaststroke",
+  "clip_timestamp": "0:29", "taxonomy_ids": ["breaststroke-sinking-hips-005", "breaststroke-breath-timing-006"],
+  "quality": "mixed", "lanes": [2, 3],
+  "coach_notes": "Lane 3: Chin not tucked, contributing to excessive head rise and hip drop (BAD). Lane 2: Good forward momentum maintained through breath cycle (GOOD). Useful for side-by-side contrast if camera angle improves.",
+  "camera_angle": "wide_spectator_stands",
+  "usable_for": [], "not_usable_for": ["any_individual_technique"],
+  "camera_limitation": "Swimmers are 20-40px. No individual technique detail resolvable.",
+  "burst_fps": 5, "burst_window": "0:27-0:31", "frame_count": 20
+}

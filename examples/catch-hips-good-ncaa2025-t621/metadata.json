@@ -1,0 +1,15 @@
+{
+  "source": "2025 NCAA 100Y Breaststroke",
+  "clip_timestamp": "0:33",
+  "full_video_timestamp": "6:21",
+  "taxonomy_ids": ["breaststroke-catch-003", "breaststroke-sinking-hips-005"],
+  "quality": "good",
+  "lanes": [1, 5],
+  "coach_notes": "Lane 1: Early-stage catch with wrist rotation just beginning — good elbow-high setup before the pull initiates. Lane 5: Good hip position at the waterline while leveraging momentum out of the breath cycle.",
+  "camera_angle": "wide_overhead_broadcast",
+  "usable_for": ["hip_level_relative", "stroke_phase_timing", "body_line"],
+  "not_usable_for": ["elbow_height_precise", "wrist_rotation_precise"],
+  "burst_fps": 5,
+  "burst_window": "0:32-0:35",
+  "frame_count": 15
+}

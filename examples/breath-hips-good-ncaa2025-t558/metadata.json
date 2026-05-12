@@ -1,0 +1,15 @@
+{
+  "source": "2025 NCAA 100Y Breaststroke",
+  "clip_timestamp": "0:10",
+  "full_video_timestamp": "5:58",
+  "taxonomy_ids": ["breaststroke-breath-timing-006", "breaststroke-sinking-hips-005"],
+  "quality": "good",
+  "lanes": [2],
+  "coach_notes": "Swimmer rises just high enough to breathe then uses the downward motion to drive forward. Chin stays tucked, keeping hips from sinking into the seesaw pattern.",
+  "camera_angle": "wide_overhead_broadcast",
+  "usable_for": ["body_line", "hip_level_relative", "breath_timing_phase", "wake_pattern"],
+  "not_usable_for": ["catch_mechanics", "elbow_position", "head_angle_precise"],
+  "burst_fps": 5,
+  "burst_window": "0:09-0:12",
+  "frame_count": 15
+}

@@ -1,0 +1,21 @@
+{
+  "source": "2026 Ivy League Championships 100Y Breaststroke",
+  "youtube_url": "https://www.youtube.com/watch?v=yDMe3TDPDsM",
+  "clip_file": "Ivy_100br_2026.mp4.webm",
+  "clip_duration_seconds": 54,
+  "clip_offset_in_full_video": "0:10",
+  "camera_angle": "wide_spectator_stands",
+  "camera_notes": "Filmed from spectator stands at end of pool. Swimmers occupy 20-40px of frame. 1080p resolution does NOT compensate for distance. NOT suitable for individual technique analysis of any kind. Useful only for race context, scoreboard data, and gross stroke count.",
+  "scan_fps": 1,
+  "total_scan_frames": 54,
+  "stroke": "breaststroke",
+  "flagged_timestamps": [
+    { "clip_time": "0:05", "taxonomy": ["breaststroke-breath-timing-006", "breaststroke-wide-pull-002"], "quality": "good", "lanes": [2] },
+    { "clip_time": "0:07", "taxonomy": ["breaststroke-sinking-hips-005"], "quality": "bad", "lanes": [3] },
+    { "clip_time": "0:16", "taxonomy": ["breaststroke-breath-timing-006", "breaststroke-sinking-hips-005"], "quality": "bad", "lanes": [2] },
+    { "clip_time": "0:29", "taxonomy": ["breaststroke-sinking-hips-005", "breaststroke-breath-timing-006"], "quality": "mixed", "lanes": [2, 3] },
+    { "clip_time": "0:31", "taxonomy": ["breaststroke-sinking-hips-005"], "quality": "bad", "lanes": [3] },
+    { "clip_time": "0:43", "taxonomy": ["breaststroke-sinking-hips-005"], "quality": "good", "lanes": [3] },
+    { "clip_time": "0:50", "taxonomy": ["breaststroke-sinking-hips-005"], "quality": "bad", "lanes": [3] }
+  ]
+}

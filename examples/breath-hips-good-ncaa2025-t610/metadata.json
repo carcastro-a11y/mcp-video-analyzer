@@ -1,0 +1,15 @@
+{
+  "source": "2025 NCAA 100Y Breaststroke",
+  "clip_timestamp": "0:22",
+  "full_video_timestamp": "6:10",
+  "taxonomy_ids": ["breaststroke-breath-timing-006", "breaststroke-sinking-hips-005"],
+  "quality": "good",
+  "lanes": [3, 4, 5],
+  "coach_notes": "All three swimmers maintain forward momentum through the breath — minimal head rise, chin tucked, and hips staying near the surface rather than dropping in the seesaw pattern.",
+  "camera_angle": "wide_overhead_broadcast",
+  "usable_for": ["body_line", "hip_level_relative", "breath_timing_phase", "multi_lane_comparison"],
+  "not_usable_for": ["chin_tuck_precise", "head_angle_precise"],
+  "burst_fps": 5,
+  "burst_window": "0:21-0:24",
+  "frame_count": 15
+}

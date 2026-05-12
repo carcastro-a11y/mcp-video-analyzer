@@ -1,0 +1,15 @@
+{
+  "source": "2025 NCAA 100Y Breaststroke",
+  "clip_timestamp": "0:11",
+  "full_video_timestamp": "5:59",
+  "taxonomy_ids": ["breaststroke-catch-003", "breaststroke-sinking-hips-005"],
+  "quality": "good",
+  "lanes": [3],
+  "coach_notes": "Excellent early vertical forearm — elbows near 90 degrees with wrists rotated to maximize water purchase. Hips remain at the waterline as the upper body rises, avoiding the seesaw hip drop.",
+  "camera_angle": "wide_overhead_broadcast",
+  "usable_for": ["body_line", "hip_level_relative", "stroke_phase_timing"],
+  "not_usable_for": ["elbow_angle_precise", "wrist_rotation", "hand_pitch"],
+  "burst_fps": 5,
+  "burst_window": "0:10-0:13",
+  "frame_count": 15
+}

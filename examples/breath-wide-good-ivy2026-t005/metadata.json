@@ -1,0 +1,10 @@
+{
+  "source": "2026 Ivy League Championships 100Y Breaststroke",
+  "clip_timestamp": "0:05", "taxonomy_ids": ["breaststroke-breath-timing-006", "breaststroke-wide-pull-002"],
+  "quality": "good", "lanes": [2],
+  "coach_notes": "Swimmer rises high out of the water but maintains tucked chin and elbows close to torso — avoiding the wide sweep that kills forward momentum.",
+  "camera_angle": "wide_spectator_stands",
+  "usable_for": [], "not_usable_for": ["any_individual_technique"],
+  "camera_limitation": "Swimmers are 20-40px. No individual technique detail resolvable.",
+  "burst_fps": 5, "burst_window": "0:03-0:07", "frame_count": 20
+}

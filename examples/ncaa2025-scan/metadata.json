@@ -1,0 +1,20 @@
+{
+  "source": "2025 NCAA Division I 100Y Breaststroke Championships",
+  "youtube_url": "https://www.youtube.com/watch?v=IGYTFVjQ3sI",
+  "clip_file": "NCAA_100br_2025_heat1.mp4.webm",
+  "clip_duration_seconds": 57,
+  "clip_offset_in_full_video": "5:48",
+  "camera_angle": "wide_overhead_broadcast",
+  "camera_notes": "Elevated wide-angle deck camera. All 8 lanes visible. Swimmers occupy ~10-20% of frame height. NOT suitable for individual catch mechanics, head angle, or elbow position. SUITABLE for body line, wake pattern, stroke timing, phase separation, stroke rate comparison across lanes.",
+  "scan_fps": 1,
+  "total_scan_frames": 57,
+  "stroke": "breaststroke",
+  "flagged_timestamps": [
+    { "clip_time": "0:10", "full_video_time": "5:58" },
+    { "clip_time": "0:11", "full_video_time": "5:59" },
+    { "clip_time": "0:21", "full_video_time": "6:09" },
+    { "clip_time": "0:22", "full_video_time": "6:10" },
+    { "clip_time": "0:33", "full_video_time": "6:21" },
+    { "clip_time": "0:45", "full_video_time": "6:33" }
+  ]
+}

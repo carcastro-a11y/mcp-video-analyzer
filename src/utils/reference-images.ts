@@ -1,9 +1,12 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import sharp from 'sharp';
-import type { TaxonomyEntry } from '../data/swim-taxonomy.js';
+import type { ExampleGroup, TaxonomyEntry } from '../data/swim-taxonomy.js';
 
-type LabelEntry = { label: string; description: string };
+interface LabelEntry {
+  label: string;
+  description: string;
+}
 
 const MAX_FRAMES_PER_GROUP = 2;
 const MAX_REF_IMAGE_WIDTH = 800;
@@ -15,9 +18,7 @@ async function resizeImageToJpeg(filePath: string): Promise<Buffer> {
     .toBuffer();
 }
 
-async function buildExampleBlocks(
-  groups: import('../data/swim-taxonomy.js').ExampleGroup[],
-): Promise<Anthropic.ContentBlockParam[]> {
+async function buildExampleBlocks(groups: ExampleGroup[]): Promise<Anthropic.ContentBlockParam[]> {
   const blocks: Anthropic.ContentBlockParam[] = [];
 
   // Collect all labels per unique frame path, preserving first-seen order

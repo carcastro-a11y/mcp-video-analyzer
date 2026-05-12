@@ -1,0 +1,10 @@
+{
+  "source": "2026 Ivy League Championships 100Y Breaststroke",
+  "clip_timestamp": "0:50", "taxonomy_ids": ["breaststroke-sinking-hips-005"],
+  "quality": "bad", "lanes": [3],
+  "coach_notes": "Hips dropped too far below the surface — seesaw pattern fully present, significantly increasing drag.",
+  "camera_angle": "wide_spectator_stands",
+  "usable_for": [], "not_usable_for": ["any_individual_technique"],
+  "camera_limitation": "Swimmers are 20-40px. No individual technique detail resolvable.",
+  "burst_fps": 5, "burst_window": "0:48-0:52", "frame_count": 20
+}

@@ -1,0 +1,10 @@
+{
+  "source": "2026 Ivy League Championships 100Y Breaststroke",
+  "clip_timestamp": "0:43", "taxonomy_ids": ["breaststroke-sinking-hips-005"],
+  "quality": "good", "lanes": [3],
+  "coach_notes": "Good body position — swimmer corrected and brought hips back to the waterline, restoring horizontal body alignment.",
+  "camera_angle": "wide_spectator_stands",
+  "usable_for": [], "not_usable_for": ["any_individual_technique"],
+  "camera_limitation": "Swimmers are 20-40px. No individual technique detail resolvable.",
+  "burst_fps": 5, "burst_window": "0:41-0:45", "frame_count": 20
+}

@@ -1,0 +1,15 @@
+{
+  "source": "2025 NCAA 100Y Breaststroke",
+  "clip_timestamp": "0:21",
+  "full_video_timestamp": "6:09",
+  "taxonomy_ids": ["breaststroke-catch-003"],
+  "quality": "good",
+  "lanes": [1, 2],
+  "coach_notes": "Both swimmers show good catch setup with hands just outside shoulder width. Lane 1 especially shows early wrist rotation before the pull begins, establishing a strong hold on the water.",
+  "camera_angle": "wide_overhead_broadcast",
+  "usable_for": ["hand_width_relative_to_shoulders", "symmetry", "stroke_phase_timing"],
+  "not_usable_for": ["elbow_depth", "wrist_angle_precise"],
+  "burst_fps": 5,
+  "burst_window": "0:20-0:23",
+  "frame_count": 15
+}

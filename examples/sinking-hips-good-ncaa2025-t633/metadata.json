@@ -1,0 +1,15 @@
+{
+  "source": "2025 NCAA 100Y Breaststroke",
+  "clip_timestamp": "0:45",
+  "full_video_timestamp": "6:33",
+  "taxonomy_ids": ["breaststroke-sinking-hips-005"],
+  "quality": "good",
+  "lanes": [4],
+  "coach_notes": "Controlled breath with minimal head rise — hips remain at the surface while the upper body clears the water, maintaining horizontal body line.",
+  "camera_angle": "wide_overhead_broadcast",
+  "usable_for": ["body_line", "hip_level_relative", "breath_timing_phase"],
+  "not_usable_for": ["head_rise_precise", "hip_depth_precise"],
+  "burst_fps": 5,
+  "burst_window": "0:44-0:47",
+  "frame_count": 15
+}

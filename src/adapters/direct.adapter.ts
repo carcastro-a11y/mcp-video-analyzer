@@ -1,8 +1,8 @@
 import { createWriteStream, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
+import { fileURLToPath } from 'node:url';
 import type {
   IAdapterCapabilities,
   IChapter,

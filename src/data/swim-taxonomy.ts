@@ -14,10 +14,13 @@ const example = (...parts: string[]) => path.join(EXAMPLES_DIR, ...parts);
 
 type Stroke = 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly';
 
+export type CameraAngle = 'overhead' | 'deck_side' | 'underwater';
+
 export interface ExampleGroup {
   label: string;
   description: string;
   frames: string[];
+  cameraAngles?: CameraAngle[];
 }
 
 export interface TaxonomyEntry {
@@ -28,6 +31,7 @@ export interface TaxonomyEntry {
   cause: string;
   fix: string;
   drill: string;
+  detectableFrom: CameraAngle[];
   referenceImages?: string[];
   badExamples?: ExampleGroup[];
   goodExamples?: ExampleGroup[];
@@ -38,6 +42,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     id: 'breaststroke-timing-001',
     stroke: 'breaststroke',
     title: 'Poor Pull-Kick Timing',
+    detectableFrom: ['overhead', 'deck_side', 'underwater'],
     description:
       'Pulling and kicking at the same time, or pausing during the breath instead of during the glide. Looks like treading water — lots of movement, very little forward progress.',
     cause:
@@ -51,6 +56,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     id: 'breaststroke-wide-pull-002',
     stroke: 'breaststroke',
     title: 'Pulling Arms Too Wide (or Too Far Back)',
+    detectableFrom: ['deck_side', 'underwater'],
     description:
       'Elbows sweep past the shoulders, arms go wide, or hands pull all the way to the hips. Looks powerful but creates a huge frontal area and kills forward momentum.',
     cause:
@@ -64,6 +70,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     id: 'breaststroke-sinking-hips-005',
     stroke: 'breaststroke',
     title: 'Sinking Hips and Poor Body Position',
+    detectableFrom: ['overhead', 'deck_side', 'underwater'],
     description:
       'Hips sink low every stroke cycle. The body tilts close to vertical during the breath, then crashes back flat. Looks like fighting the water instead of riding on top of it.',
     cause:
@@ -174,6 +181,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     id: 'breaststroke-breath-timing-006',
     stroke: 'breaststroke',
     title: 'Breathing at the Wrong Moment',
+    detectableFrom: ['overhead', 'deck_side'],
     description:
       'Head comes up with no arm support after the pull has already finished, so the whole body sinks. Or the swimmer holds their breath the entire cycle and exhales and inhales in one panicked burst.',
     cause:
@@ -186,6 +194,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     id: 'breaststroke-catch-003',
     stroke: 'breaststroke',
     title: 'Poor Catch Mechanics',
+    detectableFrom: ['deck_side', 'underwater'],
     description:
       'Elbows drop below the hands before any propulsive surface is established. Arms sweep too wide or too deep, slipping water rather than holding it. Looks like the arms are pushing down instead of pulling back.',
     cause:
@@ -338,8 +347,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
       },
       {
         label: 'Neutral head position at catch',
-        description:
-          'Head down allowing horizontal body position so catch works on a level plane.',
+        description: 'Head down allowing horizontal body position so catch works on a level plane.',
         frames: [example('catch-good', 'frame_04.png')],
       },
       {
@@ -360,6 +368,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     id: 'freestyle-head-position-004',
     stroke: 'freestyle',
     title: 'Poor Head Position',
+    detectableFrom: ['overhead', 'deck_side', 'underwater'],
     description:
       'Head lifted out of the water with eyes looking forward rather than down. Creates a seesaw effect — raised head at the front forces hips and legs to sink at the back, turning the swimmer into a wall of drag.',
     cause:
@@ -611,6 +620,24 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
 export function getTaxonomyByStroke(stroke: string): TaxonomyEntry[] {
   if (stroke === 'unknown') return SWIM_TAXONOMY;
   return SWIM_TAXONOMY.filter((entry) => entry.stroke === stroke);
+}
+
+export function getTaxonomyByStrokeAndAngle(
+  stroke: string,
+  cameraAngle: CameraAngle,
+): TaxonomyEntry[] {
+  const byStroke = getTaxonomyByStroke(stroke);
+  return byStroke
+    .filter((entry) => entry.detectableFrom.includes(cameraAngle))
+    .map((entry) => ({
+      ...entry,
+      badExamples: entry.badExamples?.filter(
+        (g) => !g.cameraAngles || g.cameraAngles.includes(cameraAngle),
+      ),
+      goodExamples: entry.goodExamples?.filter(
+        (g) => !g.cameraAngles || g.cameraAngles.includes(cameraAngle),
+      ),
+    }));
 }
 
 export function formatTaxonomyForPrompt(entries: TaxonomyEntry[]): string {

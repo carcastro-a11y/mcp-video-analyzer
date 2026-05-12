@@ -4,10 +4,16 @@ import { UserError, imageContent } from 'fastmcp';
 import fs from 'fs';
 import { z } from 'zod';
 import { getAdapter } from '../adapters/adapter.interface.js';
-import { formatTaxonomyForPrompt, getTaxonomyByStroke } from '../data/swim-taxonomy.js';
+import type { CameraAngle } from '../data/swim-taxonomy.js';
+import {
+  formatTaxonomyForPrompt,
+  getTaxonomyByStroke,
+  getTaxonomyByStrokeAndAngle,
+} from '../data/swim-taxonomy.js';
 import { deduplicateFrames } from '../processors/frame-dedup.js';
 import {
   extractFrameBurst,
+  formatTimestamp,
   parseTimestamp,
   probeVideoDuration,
 } from '../processors/frame-extractor.js';
@@ -32,9 +38,20 @@ const AnalyzeSwimStrokeSchema = z.object({
     .default('unknown')
     .optional()
     .describe('Swimming stroke being performed (helps focus the analysis)'),
+  cameraAngle: z
+    .enum(['overhead', 'deck_side', 'underwater'])
+    .optional()
+    .describe(
+      'Camera angle of the footage. Controls which taxonomy entries are shown and how Claude interprets the frames. ' +
+        '"overhead" = elevated wide-angle broadcast or stands (body line, hip level, breath height, phase timing, wake pattern). ' +
+        '"deck_side" = pool deck level side-on (head position, arm recovery, body line, breathing timing). ' +
+        '"underwater" = submerged camera (catch mechanics, pull path, kick, body rotation). ' +
+        'Omit if unknown — defaults to full taxonomy.',
+    ),
   focus: z
     .array(
       z.enum([
+        // deck_side / underwater
         'arm_entry',
         'pull_phase',
         'kick',
@@ -43,6 +60,14 @@ const AnalyzeSwimStrokeSchema = z.object({
         'breathing',
         'turn',
         'start',
+        // overhead
+        'body_line',
+        'hip_level',
+        'breath_height',
+        'phase_timing',
+        'wake_pattern',
+        'stroke_rate',
+        // universal
         'overall',
       ]),
     )
@@ -57,6 +82,115 @@ const AnalyzeSwimStrokeSchema = z.object({
     .optional()
     .describe('Number of frames to extract for analysis (default: 8)'),
 });
+
+function buildAngleSystemPrompt(cameraAngle: CameraAngle | undefined): string {
+  const base =
+    `You are an expert swimming coach with deep knowledge of competitive swimming technique.\n` +
+    `You analyze video frames to provide specific, actionable technique feedback.\n` +
+    `Be precise about what you observe — reference body position, timing, and mechanics directly.\n` +
+    `Structure your feedback clearly with strengths, areas for improvement, and specific drills to fix issues.`;
+
+  if (cameraAngle === 'overhead') {
+    return (
+      base +
+      `\n\n## Camera angle: ELEVATED WIDE-ANGLE (overhead)\n\n` +
+      `At this distance swimmers occupy a small portion of the frame.\n` +
+      `Your analysis must be strictly limited to what is physically visible from this angle.\n\n` +
+      `**WHAT YOU CAN ASSESS:**\n` +
+      `- Body silhouette angle relative to the waterline (seesaw vs. flat body line)\n` +
+      `- Hip level: whether hips are at, above, or visibly below the waterline\n` +
+      `- Breath height: how far the swimmer's head/body rises above the surface during the breath\n` +
+      `- Phase timing: visible glide pauses between stroke cycles vs. constant churning motion\n` +
+      `- Wake pattern: tight narrow wake (forward-directed energy) vs. wide scattered wake (vertical bobbing)\n` +
+      `- Stroke rate: countable from splash rhythm\n` +
+      `- Cross-lane comparison: relative body position and timing between swimmers\n\n` +
+      `**WHAT YOU CANNOT ASSESS — do NOT speculate about these:**\n` +
+      `- Elbow position, elbow angle, or wrist rotation\n` +
+      `- Hand pitch or catch depth\n` +
+      `- Precise head angle or chin position\n` +
+      `- Kick mechanics below the surface\n` +
+      `- Body rotation (freestyle/backstroke)\n\n` +
+      `If something is not clearly visible from this angle, say so and redirect to what IS observable.`
+    );
+  }
+
+  if (cameraAngle === 'deck_side') {
+    return (
+      base +
+      `\n\n## Camera angle: POOL DECK LEVEL (side-on)\n\n` +
+      `**WHAT YOU CAN ASSESS:**\n` +
+      `- Head position during breath: height above water, neck extension, chin angle\n` +
+      `- Body line and undulation above the waterline\n` +
+      `- Hip position relative to the waterline\n` +
+      `- Arm recovery height and path above water\n` +
+      `- Breathing timing relative to the pull cycle\n` +
+      `- Body angle during the breath and seesaw effect\n` +
+      `- General kick pattern above the surface\n\n` +
+      `**WHAT YOU CANNOT ASSESS without underwater footage:**\n` +
+      `- Hand pitch and catch depth\n` +
+      `- Underwater pull path\n` +
+      `- Kick mechanics below the surface`
+    );
+  }
+
+  if (cameraAngle === 'underwater') {
+    return (
+      base +
+      `\n\n## Camera angle: UNDERWATER\n\n` +
+      `**WHAT YOU CAN ASSESS:**\n` +
+      `- Catch mechanics: elbow position, hand pitch, forearm angle (early vertical forearm)\n` +
+      `- Pull path: direction and efficiency of force application\n` +
+      `- Kick mechanics: knee bend, foot position, kick depth and width\n` +
+      `- Hip position and body rotation\n` +
+      `- Streamline position during glide\n` +
+      `- Arm symmetry and bilateral timing\n\n` +
+      `**WHAT YOU CANNOT ASSESS reliably:**\n` +
+      `- Breathing timing (head position above water not visible)\n` +
+      `- Race-pace stroke rate without surface context`
+    );
+  }
+
+  return base;
+}
+
+function buildUserPrompt(
+  strokeLabel: string,
+  focusLabel: string,
+  cameraAngle: CameraAngle | undefined,
+): string {
+  const angleNote =
+    cameraAngle === 'overhead'
+      ? `\nNote: This is an elevated wide-angle shot. Assess only what is visible at this distance — body silhouette, hip level, breath height, phase timing, and wake pattern. Do not speculate about elbow position, hand pitch, or any fine arm mechanics.`
+      : cameraAngle === 'deck_side'
+        ? `\nNote: This is a pool deck side-on view. Focus on above-water mechanics — head position, body line, hip level, and breathing timing.`
+        : cameraAngle === 'underwater'
+          ? `\nNote: This is underwater footage. Focus on catch mechanics, pull path, kick, and body rotation.`
+          : '';
+
+  return `These are sequential frames from a ${strokeLabel} video.
+Please analyze the swimmer's ${focusLabel}.${angleNote}
+
+Provide your analysis in this structure:
+
+## Stroke: ${strokeLabel.charAt(0).toUpperCase() + strokeLabel.slice(1)}
+## Camera Angle: ${cameraAngle ?? 'unspecified'}
+## Focus Areas: ${focusLabel}
+
+### What I Observe
+(Describe what you see across the frames — only what is visible from this camera angle)
+
+### Strengths
+(What the swimmer is doing well)
+
+### Areas for Improvement
+(Specific technique issues observed, referencing only what is detectable from this angle)
+
+### Recommended Drills
+(3–5 specific drills to address the issues found)
+
+### Summary
+(One paragraph coaching summary)`;
+}
 
 export function registerAnalyzeSwimStroke(server: FastMCP): void {
   server.addTool({
@@ -87,6 +221,7 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
       const stroke = args.stroke ?? 'unknown';
       const focus = args.focus ?? ['overall'];
       const frameCount = args.frameCount ?? 8;
+      const cameraAngle = args.cameraAngle as CameraAngle | undefined;
 
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
@@ -134,8 +269,8 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
         rawFrames = await extractFrameBurst(
           videoPath,
           tempDir,
-          '0',
-          String(totalDuration),
+          '0:00',
+          formatTimestamp(totalDuration),
           frameCount,
         );
       }
@@ -181,42 +316,24 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
           ? 'overall technique'
           : focus.map((f) => f.replace(/_/g, ' ')).join(', ');
 
-      const taxonomyEntries = getTaxonomyByStroke(stroke);
+      const taxonomyEntries = cameraAngle
+        ? getTaxonomyByStrokeAndAngle(stroke, cameraAngle)
+        : getTaxonomyByStroke(stroke);
       const taxonomySection = formatTaxonomyForPrompt(taxonomyEntries);
 
+      const angleSystemPrompt = buildAngleSystemPrompt(cameraAngle);
       const systemPrompt =
-        `You are an expert swimming coach with deep knowledge of competitive swimming technique.\n` +
-        `You analyze video frames to provide specific, actionable technique feedback.\n` +
-        `Be precise about what you observe — reference body position, timing, and mechanics directly.\n` +
-        `Structure your feedback clearly with strengths, areas for improvement, and specific drills to fix issues.` +
+        angleSystemPrompt +
         (taxonomySection.length > 0
-          ? `\n\n---\n\n## Known common mistakes for this stroke\n\n${taxonomySection}`
+          ? `\n\n---\n\n## Technique issues detectable from this camera angle\n\n${taxonomySection}`
           : '');
 
-      const userPrompt = `These are sequential frames from a ${strokeLabel} video.
-Please analyze the swimmer's ${focusLabel}.
+      const userPrompt = buildUserPrompt(strokeLabel, focusLabel, cameraAngle);
 
-Provide your analysis in this structure:
-
-## Stroke: ${strokeLabel.charAt(0).toUpperCase() + strokeLabel.slice(1)}
-## Focus Areas: ${focusLabel}
-
-### What I Observe
-(Describe what you see across the frames — body position, timing, mechanics)
-
-### Strengths
-(What the swimmer is doing well)
-
-### Areas for Improvement
-(Specific technique issues observed, with frame-by-frame references where relevant)
-
-### Recommended Drills
-(3–5 specific drills or exercises to address the issues found)
-
-### Summary
-(One paragraph coaching summary)`;
-
-      const referenceBlocks = await buildReferenceBlocks(taxonomyEntries);
+      // Only send reference images for deck_side and underwater — the existing
+      // reference images are all close-up shots that would confuse overhead analysis.
+      const referenceBlocks =
+        cameraAngle === 'overhead' ? [] : await buildReferenceBlocks(taxonomyEntries);
 
       const client = new Anthropic({ apiKey });
 
@@ -250,6 +367,7 @@ Provide your analysis in this structure:
       const metadata = {
         framesAnalyzed: frames.length,
         stroke,
+        cameraAngle: cameraAngle ?? 'unspecified',
         focus,
         range: args.from && args.to ? { from: args.from, to: args.to } : null,
         model: response.model,

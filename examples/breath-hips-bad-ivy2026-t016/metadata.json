@@ -1,0 +1,10 @@
+{
+  "source": "2026 Ivy League Championships 100Y Breaststroke",
+  "clip_timestamp": "0:16", "taxonomy_ids": ["breaststroke-breath-timing-006", "breaststroke-sinking-hips-005"],
+  "quality": "bad", "lanes": [2],
+  "coach_notes": "Swimmer rises too high during the breath — momentum redirected downward rather than forward. Excessive head lift triggering the seesaw hip drop.",
+  "camera_angle": "wide_spectator_stands",
+  "usable_for": [], "not_usable_for": ["any_individual_technique"],
+  "camera_limitation": "Swimmers are 20-40px. No individual technique detail resolvable.",
+  "burst_fps": 5, "burst_window": "0:14-0:18", "frame_count": 20
+}
