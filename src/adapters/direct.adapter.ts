@@ -1,4 +1,5 @@
-import { createWriteStream } from 'node:fs';
+import { createWriteStream, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -69,6 +70,11 @@ export class DirectAdapter implements IVideoAdapter {
   }
 
   async downloadVideo(url: string, destDir: string): Promise<string | null> {
+    if (url.startsWith('file://')) {
+      const localPath = fileURLToPath(url);
+      return existsSync(localPath) ? localPath : null;
+    }
+
     const filename = getFilenameFromUrl(url);
     const destPath = join(destDir, filename);
 

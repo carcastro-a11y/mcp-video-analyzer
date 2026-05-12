@@ -1,8 +1,58 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
+import sharp from 'sharp';
 import type { TaxonomyEntry } from '../data/swim-taxonomy.js';
 
-export function buildReferenceBlocks(entries: TaxonomyEntry[]): Anthropic.ContentBlockParam[] {
+type LabelEntry = { label: string; description: string };
+
+const MAX_FRAMES_PER_GROUP = 2;
+const MAX_REF_IMAGE_WIDTH = 800;
+
+async function resizeImageToJpeg(filePath: string): Promise<Buffer> {
+  return sharp(filePath)
+    .resize({ width: MAX_REF_IMAGE_WIDTH, withoutEnlargement: true })
+    .jpeg({ quality: 75 })
+    .toBuffer();
+}
+
+async function buildExampleBlocks(
+  groups: import('../data/swim-taxonomy.js').ExampleGroup[],
+): Promise<Anthropic.ContentBlockParam[]> {
+  const blocks: Anthropic.ContentBlockParam[] = [];
+
+  // Collect all labels per unique frame path, preserving first-seen order
+  const frameLabels = new Map<string, LabelEntry[]>();
+  for (const group of groups) {
+    let count = 0;
+    for (const framePath of group.frames) {
+      if (!fs.existsSync(framePath)) continue;
+      if (count >= MAX_FRAMES_PER_GROUP) break;
+      const existing = frameLabels.get(framePath);
+      if (existing) {
+        existing.push({ label: group.label, description: group.description });
+      } else {
+        frameLabels.set(framePath, [{ label: group.label, description: group.description }]);
+      }
+      count++;
+    }
+  }
+
+  for (const [framePath, labels] of frameLabels) {
+    const labelText = labels.map((l) => `**${l.label}**: ${l.description}`).join('\n');
+    blocks.push({ type: 'text', text: labelText });
+    const resized = await resizeImageToJpeg(framePath);
+    blocks.push({
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/jpeg', data: resized.toString('base64') },
+    });
+  }
+
+  return blocks;
+}
+
+export async function buildReferenceBlocks(
+  entries: TaxonomyEntry[],
+): Promise<Anthropic.ContentBlockParam[]> {
   const blocks: Anthropic.ContentBlockParam[] = [];
 
   for (const entry of entries) {
@@ -12,14 +62,7 @@ export function buildReferenceBlocks(entries: TaxonomyEntry[]): Anthropic.Conten
 
     if (hasBad) {
       blocks.push({ type: 'text', text: `\n### ${entry.title} — BAD form (what to flag)\n` });
-      for (const group of entry.badExamples ?? []) {
-        blocks.push({ type: 'text', text: `**${group.label}**: ${group.description}` });
-        for (const framePath of group.frames) {
-          if (!fs.existsSync(framePath)) continue;
-          const data = fs.readFileSync(framePath).toString('base64');
-          blocks.push({ type: 'image', source: { type: 'base64', media_type: 'image/png', data } });
-        }
-      }
+      blocks.push(...(await buildExampleBlocks(entry.badExamples ?? [])));
     }
 
     if (hasGood) {
@@ -27,14 +70,7 @@ export function buildReferenceBlocks(entries: TaxonomyEntry[]): Anthropic.Conten
         type: 'text',
         text: `\n### ${entry.title} — CORRECT form (what to aim for)\n`,
       });
-      for (const group of entry.goodExamples ?? []) {
-        blocks.push({ type: 'text', text: `**${group.label}**: ${group.description}` });
-        for (const framePath of group.frames) {
-          if (!fs.existsSync(framePath)) continue;
-          const data = fs.readFileSync(framePath).toString('base64');
-          blocks.push({ type: 'image', source: { type: 'base64', media_type: 'image/png', data } });
-        }
-      }
+      blocks.push(...(await buildExampleBlocks(entry.goodExamples ?? [])));
     }
   }
 

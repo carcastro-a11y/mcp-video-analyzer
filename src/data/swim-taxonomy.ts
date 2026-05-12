@@ -182,6 +182,430 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     drill:
       'Practice standing in shallow water doing the arm motion and timing the breath without the pressure of actually swimming.',
   },
+  {
+    id: 'breaststroke-catch-003',
+    stroke: 'breaststroke',
+    title: 'Poor Catch Mechanics',
+    description:
+      'Elbows drop below the hands before any propulsive surface is established. Arms sweep too wide or too deep, slipping water rather than holding it. Looks like the arms are pushing down instead of pulling back.',
+    cause:
+      'Swimmers extend fully before bending the elbow, missing the early vertical forearm window. Common in people who learned breaststroke without coaching and default to a wide sweeping motion.',
+    fix: 'Initiate the catch with the elbow high and outside. The forearm should be near-vertical before the pull begins. Think "elbows up, hands down" at the start of every pull.',
+    drill:
+      'Catch-up drill with fists closed — swim breaststroke with fists to force forearm engagement. Then open hands and try to recreate the same forearm pressure. 4 x 25m, 20 seconds rest.',
+    badExamples: [
+      {
+        label: 'Dropped elbow — no EVF established',
+        description:
+          'Elbow falls below wrist at the catch moment. The forearm cannot act as a propulsive surface when the elbow is the lowest point.',
+        frames: [
+          example('catch-bad', 'frame_01.png'),
+          example('catch-bad', 'frame_03.png'),
+          example('catch-bad', 'frame_04.png'),
+          example('catch-bad', 'frame_05.png'),
+          example('catch-bad', 'frame_09.png'),
+          example('catch-bad', 'frame_12.png'),
+        ],
+      },
+      {
+        label: 'Crossover entry — arm crossing centerline',
+        description:
+          'Hand enters across the body centerline causing hip snaking and a misdirected pull path.',
+        frames: [example('catch-bad', 'frame_02.png'), example('catch-bad', 'frame_08.png')],
+      },
+      {
+        label: 'Flat wrist — no downward hand pitch at entry',
+        description: 'Hand enters flat rather than fingertips-down, delaying catch initiation.',
+        frames: [example('catch-bad', 'frame_01.png'), example('catch-bad', 'frame_06.png')],
+      },
+      {
+        label: 'Late catch initiation — straight arm pull',
+        description:
+          'Arm nearly fully extended with no elbow bend at what should be the catch moment. Swimmer relies on straight-arm pull instead of EVF.',
+        frames: [example('catch-bad', 'frame_04.png'), example('catch-bad', 'frame_10.png')],
+      },
+      {
+        label: 'Bilateral elbow dropout',
+        description:
+          'Both arms lose high elbow position simultaneously — no vertical forearm on either side.',
+        frames: [example('catch-bad', 'frame_05.png'), example('catch-bad', 'frame_12.png')],
+      },
+      {
+        label: 'Palm facing down not back',
+        description:
+          'Hand oriented toward pool floor rather than back wall, producing lift/brake force instead of propulsion.',
+        frames: [example('catch-bad', 'frame_02.png'), example('catch-bad', 'frame_10.png')],
+      },
+      {
+        label: 'Dead spot glide — lead arm paused flat',
+        description:
+          'Lead arm pauses flat on the surface instead of transitioning to catch, creating a deceleration dead spot.',
+        frames: [example('catch-bad', 'frame_07.png')],
+      },
+      {
+        label: 'Shoulder over-rotation',
+        description:
+          'Body rolled past 45° moving shoulder out of strong catch position and reducing mechanical advantage.',
+        frames: [example('catch-bad', 'frame_08.png')],
+      },
+      {
+        label: 'Shallow elbow sweep — arms too wide before catch',
+        description:
+          'Arms sweep laterally past shoulder-width before any vertical forearm position is established. Slipping water rather than catching it.',
+        frames: [example('catch-bad', 'frame_03.png'), example('catch-bad', 'frame_05.png')],
+      },
+      {
+        label: 'Elbow collapse mid-pull',
+        description:
+          'Elbow drops during the pull phase. All propulsion shifts to shoulder/upper arm rather than the larger forearm paddle surface.',
+        frames: [example('catch-bad', 'frame_11.png')],
+      },
+      {
+        label: 'Head lift disrupting catch',
+        description:
+          'Elevated head shifts weight backward so catching arm works uphill. Also prevents shoulder from dropping into the catch plane.',
+        frames: [example('catch-bad', 'frame_06.png')],
+      },
+      {
+        label: 'Over-reach depth',
+        description:
+          'Hand goes past natural catch depth, forcing swimmer to push water down before pushing it back.',
+        frames: [example('catch-bad', 'frame_09.png')],
+      },
+    ],
+    goodExamples: [
+      {
+        label: 'EVF established — forearm near vertical',
+        description:
+          'Elbow elevated above wrist and hand with forearm close to perpendicular to travel direction. Classic high-elbow catch position.',
+        frames: [
+          example('catch-good', 'frame_02.png'),
+          example('catch-good', 'frame_06.png'),
+          example('catch-good', 'frame_07.png'),
+          example('catch-good', 'frame_08.png'),
+        ],
+      },
+      {
+        label: 'Correct entry angle — fingertips first',
+        description:
+          'Wrist cocked with fingers leading into water at a downward angle. No flat slap, no air bubbles trapped under palm.',
+        frames: [example('catch-good', 'frame_05.png'), example('catch-good', 'frame_12.png')],
+      },
+      {
+        label: 'Palm facing backward',
+        description:
+          'Hand pitched toward back wall not pool floor. Propulsive force directed horizontally.',
+        frames: [example('catch-good', 'frame_02.png'), example('catch-good', 'frame_10.png')],
+      },
+      {
+        label: 'Bilateral EVF — both arms simultaneously',
+        description:
+          'Both arms show elbow-above-wrist position at the same time. Critical for breaststroke symmetry.',
+        frames: [
+          example('catch-good', 'frame_02.png'),
+          example('catch-good', 'frame_04.png'),
+          example('catch-good', 'frame_09.png'),
+        ],
+      },
+      {
+        label: 'No elbow collapse mid-pull',
+        description:
+          'High elbow maintained through the pull phase past the most common failure point.',
+        frames: [example('catch-good', 'frame_07.png'), example('catch-good', 'frame_11.png')],
+      },
+      {
+        label: 'Body rotation synced to catch',
+        description: 'Torso roll timed to load the catch, adding rotation power to the arm pull.',
+        frames: [example('catch-good', 'frame_06.png'), example('catch-good', 'frame_10.png')],
+      },
+      {
+        label: 'Entry outside shoulder line',
+        description:
+          'Hand enters at or outside shoulder — no crossover. Sets up a straight pull path.',
+        frames: [example('catch-good', 'frame_03.png'), example('catch-good', 'frame_05.png')],
+      },
+      {
+        label: 'Full pull length achieved',
+        description:
+          'Arm travels from full extension to past the hip. Only possible when catch was set correctly at the start.',
+        frames: [example('catch-good', 'frame_13.png')],
+      },
+      {
+        label: 'Forearm as paddle surface',
+        description:
+          'Full inner forearm from wrist to elbow pressing water backward during the pull.',
+        frames: [example('catch-good', 'frame_11.png')],
+      },
+      {
+        label: 'Neutral head position at catch',
+        description:
+          'Head down allowing horizontal body position so catch works on a level plane.',
+        frames: [example('catch-good', 'frame_04.png')],
+      },
+      {
+        label: 'Clean entry — no air bubbles',
+        description:
+          'No aeration under the palm at entry. Clean entry means the hand has solid water to catch against immediately.',
+        frames: [example('catch-good', 'frame_12.png')],
+      },
+      {
+        label: 'Symmetric bilateral timing',
+        description:
+          'Both arms at matching depth and angle viewed frontally. Hallmark of a well-timed breaststroke catch.',
+        frames: [example('catch-good', 'frame_09.png')],
+      },
+    ],
+  },
+  {
+    id: 'freestyle-head-position-004',
+    stroke: 'freestyle',
+    title: 'Poor Head Position',
+    description:
+      'Head lifted out of the water with eyes looking forward rather than down. Creates a seesaw effect — raised head at the front forces hips and legs to sink at the back, turning the swimmer into a wall of drag.',
+    cause:
+      'Instinct to see where you are going. Anxiety about breathing causes swimmers to lift the head rather than rotate it. Common in beginners and triathletes who learned in open water.',
+    fix: 'Look at the pool floor, not the wall ahead. One goggle should stay submerged on the breath. Use the bow wave trough to breathe — it creates a natural air pocket without any head lift.',
+    drill:
+      'Catch-up drill with a focus on keeping the crown of the head as the highest point at all times. 4 x 50m, breathing every 3 strokes, 20 seconds rest. Use a tempo trainer to keep stroke rate steady.',
+    badExamples: [
+      {
+        label: 'Head fully out of water — extreme lift',
+        description:
+          'Entire head including chin clear of surface. Most extreme form of head lift fault. Body adopts nearly vertical position in the water.',
+        frames: [
+          example('head-position-bad', 'frame_02.png'),
+          example('head-position-bad', 'frame_03.png'),
+          example('head-position-bad', 'frame_04.png'),
+          example('head-position-bad', 'frame_05.png'),
+          example('head-position-bad', 'frame_06.png'),
+        ],
+      },
+      {
+        label: 'Forward gaze — eyes at horizon',
+        description:
+          'Eyes directed at the far wall rather than pool floor. Eye line should be directed downward at approximately 45 degrees.',
+        frames: [
+          example('head-position-bad', 'frame_01.png'),
+          example('head-position-bad', 'frame_04.png'),
+          example('head-position-bad', 'frame_06.png'),
+          example('head-position-bad', 'frame_07.png'),
+          example('head-position-bad', 'frame_10.png'),
+          example('head-position-bad', 'frame_11.png'),
+          example('head-position-bad', 'frame_12.png'),
+        ],
+      },
+      {
+        label: 'Neck hyperextension',
+        description:
+          'Cervical spine cranked upward from neutral creating pronounced arch at back of neck.',
+        frames: [
+          example('head-position-bad', 'frame_01.png'),
+          example('head-position-bad', 'frame_06.png'),
+          example('head-position-bad', 'frame_10.png'),
+        ],
+      },
+      {
+        label: 'Hip sink from head lift',
+        description:
+          'Hips and legs dropping as direct consequence of raised head. Classic seesaw effect.',
+        frames: [
+          example('head-position-bad', 'frame_02.png'),
+          example('head-position-bad', 'frame_10.png'),
+          example('head-position-bad', 'frame_11.png'),
+          example('head-position-bad', 'frame_12.png'),
+        ],
+      },
+      {
+        label: 'Vertical body position from head lift',
+        description:
+          'Torso nearly upright in water. Swimmer is moving through the water like a post rather than over it.',
+        frames: [
+          example('head-position-bad', 'frame_02.png'),
+          example('head-position-bad', 'frame_04.png'),
+          example('head-position-bad', 'frame_05.png'),
+          example('head-position-bad', 'frame_06.png'),
+        ],
+      },
+      {
+        label: 'Shoulder elevation from head',
+        description:
+          'Shoulders rise toward ears caused by tension from head lift. Disrupts shoulder rotation needed for efficient stroke.',
+        frames: [
+          example('head-position-bad', 'frame_01.png'),
+          example('head-position-bad', 'frame_07.png'),
+          example('head-position-bad', 'frame_08.png'),
+        ],
+      },
+      {
+        label: 'Over-rotation on breath',
+        description:
+          'Head rotating beyond 90 degrees AND lifting simultaneously on the breath. One goggle should stay submerged.',
+        frames: [example('head-position-bad', 'frame_08.png')],
+      },
+      {
+        label: 'Head lift with chin compression',
+        description:
+          'Head raised but chin tucked creating a neck crunch. Incorrect compensation by swimmers who know not to look forward.',
+        frames: [example('head-position-bad', 'frame_09.png')],
+      },
+      {
+        label: 'Lumbar arch from head lift',
+        description:
+          'Lower back hollowing as compensation for elevated head. Increases drag profile at the hips.',
+        frames: [
+          example('head-position-bad', 'frame_11.png'),
+          example('head-position-bad', 'frame_12.png'),
+        ],
+      },
+      {
+        label: 'Elbow drop linked to head position',
+        description:
+          'Catch compromised because elevated head prevents shoulder from dropping into the water on the catching side.',
+        frames: [example('head-position-bad', 'frame_12.png')],
+      },
+      {
+        label: 'Chest above waterline',
+        description:
+          'Upper chest and torso riding above surface. Should be submerged in a horizontal streamlined position.',
+        frames: [
+          example('head-position-bad', 'frame_03.png'),
+          example('head-position-bad', 'frame_04.png'),
+          example('head-position-bad', 'frame_05.png'),
+          example('head-position-bad', 'frame_06.png'),
+        ],
+      },
+      {
+        label: 'Persistent head lift pattern',
+        description:
+          'Head never submerges across multiple stroke phases. Structural fault not a momentary error.',
+        frames: [
+          example('head-position-bad', 'frame_02.png'),
+          example('head-position-bad', 'frame_05.png'),
+          example('head-position-bad', 'frame_06.png'),
+          example('head-position-bad', 'frame_11.png'),
+          example('head-position-bad', 'frame_12.png'),
+        ],
+      },
+    ],
+    goodExamples: [
+      {
+        label: 'Head submerged during glide',
+        description:
+          'Head fully down and in line with spine during non-breath phase. Crown is highest point, not the face.',
+        frames: [
+          example('head-position-good', 'frame_02.png'),
+          example('head-position-good', 'frame_05.png'),
+          example('head-position-good', 'frame_07.png'),
+          example('head-position-good', 'frame_12.png'),
+        ],
+      },
+      {
+        label: 'Minimal breath lift — chin at waterline',
+        description:
+          'Head raised only enough to clear airway. Chin just at waterline, no energy wasted lifting higher than the breath requires.',
+        frames: [
+          example('head-position-good', 'frame_01.png'),
+          example('head-position-good', 'frame_03.png'),
+          example('head-position-good', 'frame_10.png'),
+          example('head-position-good', 'frame_11.png'),
+          example('head-position-good', 'frame_13.png'),
+        ],
+      },
+      {
+        label: 'Body-driven head rise',
+        description:
+          'Head elevation caused by whole-body surge during pull, not isolated neck extension. Chest rises with the head.',
+        frames: [
+          example('head-position-good', 'frame_01.png'),
+          example('head-position-good', 'frame_03.png'),
+          example('head-position-good', 'frame_10.png'),
+          example('head-position-good', 'frame_11.png'),
+        ],
+      },
+      {
+        label: 'Neutral cervical spine',
+        description:
+          'No hyperextension at back of neck during breath. Neck and upper back form a smooth curve not a sharp angle.',
+        frames: [
+          example('head-position-good', 'frame_01.png'),
+          example('head-position-good', 'frame_03.png'),
+          example('head-position-good', 'frame_09.png'),
+          example('head-position-good', 'frame_11.png'),
+        ],
+      },
+      {
+        label: 'Head centered bilaterally',
+        description:
+          'Head tracking straight on centerline with no lateral tilt or twist. Critical for breaststroke to avoid yaw.',
+        frames: [
+          example('head-position-good', 'frame_04.png'),
+          example('head-position-good', 'frame_08.png'),
+          example('head-position-good', 'frame_13.png'),
+        ],
+      },
+      {
+        label: 'Chin drops before arm extension',
+        description:
+          'Chin returning down ahead of arms reaching into streamline. Correct sequencing — head leads body into position.',
+        frames: [
+          example('head-position-good', 'frame_04.png'),
+          example('head-position-good', 'frame_09.png'),
+          example('head-position-good', 'frame_12.png'),
+        ],
+      },
+      {
+        label: 'Crown as leading point',
+        description:
+          'Top of head is highest and leading point of body. Face directed downward. Confirmed by minimal surface disturbance at head.',
+        frames: [
+          example('head-position-good', 'frame_06.png'),
+          example('head-position-good', 'frame_07.png'),
+          example('head-position-good', 'frame_12.png'),
+        ],
+      },
+      {
+        label: 'Flat body line confirmed by head',
+        description:
+          'Horizontal body position visible as direct consequence of correct head position. No seesaw effect.',
+        frames: [
+          example('head-position-good', 'frame_02.png'),
+          example('head-position-good', 'frame_05.png'),
+          example('head-position-good', 'frame_07.png'),
+        ],
+      },
+      {
+        label: 'Relaxed shoulders from head position',
+        description:
+          'No shoulder elevation or trapezius tension. Relaxed shoulder girdle is the downstream benefit of controlled head position.',
+        frames: [
+          example('head-position-good', 'frame_04.png'),
+          example('head-position-good', 'frame_08.png'),
+          example('head-position-good', 'frame_13.png'),
+        ],
+      },
+      {
+        label: 'Correct breath timing',
+        description:
+          'Breath taken at biomechanically correct moment — during the insweep/pull when body naturally rises.',
+        frames: [example('head-position-good', 'frame_11.png')],
+      },
+      {
+        label: 'Downward forward gaze',
+        description:
+          'Eyes angled toward pool floor not at horizon. Confirms head is not hyperextended.',
+        frames: [
+          example('head-position-good', 'frame_03.png'),
+          example('head-position-good', 'frame_09.png'),
+        ],
+      },
+      {
+        label: 'Head tucked in streamline',
+        description:
+          'Head between extended arms rather than above arm line. Passive and relaxed — correct for the glide phase.',
+        frames: [example('head-position-good', 'frame_07.png')],
+      },
+    ],
+  },
 ];
 
 export function getTaxonomyByStroke(stroke: string): TaxonomyEntry[] {

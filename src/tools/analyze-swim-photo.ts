@@ -106,7 +106,7 @@ Requires ANTHROPIC_API_KEY in the environment.`,
 
       const taxonomyEntries = getTaxonomyByStroke(stroke);
       const taxonomySection = formatTaxonomyForPrompt(taxonomyEntries);
-      const referenceBlocks = buildReferenceBlocks(taxonomyEntries);
+      const referenceBlocks = await buildReferenceBlocks(taxonomyEntries);
 
       const systemPrompt =
         `You are an expert swimming coach with deep knowledge of competitive swimming technique.\n` +

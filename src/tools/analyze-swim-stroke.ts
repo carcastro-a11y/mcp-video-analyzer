@@ -216,7 +216,7 @@ Provide your analysis in this structure:
 ### Summary
 (One paragraph coaching summary)`;
 
-      const referenceBlocks = buildReferenceBlocks(taxonomyEntries);
+      const referenceBlocks = await buildReferenceBlocks(taxonomyEntries);
 
       const client = new Anthropic({ apiKey });
 
