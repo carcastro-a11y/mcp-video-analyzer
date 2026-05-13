@@ -4,9 +4,9 @@ Frame samples illustrating proper head position during breaststroke. The head st
 
 ## Frames
 
-Thirteen frames captured chronologically from a swim video, showing correct head position across multiple stroke cycles from both surface and underwater angles.
+Sixteen frames captured from swim video. Frames 1–13 show correct head position across multiple stroke cycles from training footage. Frames 14–16 are from Tokyo 2020 Olympic competition footage, showing elite-level head position during racing.
 
-`frame_01.png` through `frame_13.png` — ordered by timestamp.
+`frame_01.png` through `frame_16.png` — ordered by timestamp.
 
 ## Purpose
 
