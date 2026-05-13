@@ -4,9 +4,9 @@ Frame samples illustrating a poor catch phase during breaststroke. Common faults
 
 ## Frames
 
-Twelve frames captured chronologically from a swim video, showing catch-phase issues across multiple stroke cycles from both surface and underwater angles.
+Fifteen frames captured from swim video, showing catch-phase issues across multiple stroke cycles from both surface and underwater angles. Frames 13–15 add additional reference samples.
 
-`frame_01.png` through `frame_12.png` — ordered by timestamp.
+`frame_01.png` through `frame_15.png` — ordered by timestamp.
 
 ## Purpose
 
