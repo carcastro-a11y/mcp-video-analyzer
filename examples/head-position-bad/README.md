@@ -4,9 +4,9 @@ Frame samples illustrating poor head position during breaststroke. Common faults
 
 ## Frames
 
-Twelve frames captured chronologically from a swim video, showing head-position issues across multiple stroke cycles from both surface and underwater angles.
+Fourteen frames captured from swim video. Frames 1–12 show head-position issues from training footage across multiple stroke cycles. Frames 13–14 are from Tokyo 2020 Olympic competition footage, showing head-position faults at the elite racing level.
 
-`frame_01.png` through `frame_12.png` — ordered by timestamp.
+`frame_01.png` through `frame_14.png` — ordered by timestamp.
 
 ## Purpose
 
