@@ -81,14 +81,29 @@ const AnalyzeSwimStrokeSchema = z.object({
     .default(8)
     .optional()
     .describe('Number of frames to extract for analysis (default: 8)'),
+  swimmer: z
+    .string()
+    .optional()
+    .describe(
+      'Description of a specific swimmer to focus on (e.g., "lane 4 from bottom, blue cap and blue suit"). ' +
+        'When provided, Claude will track and analyze only that swimmer across all frames, ' +
+        'using other swimmers only for comparison.',
+    ),
 });
 
-function buildAngleSystemPrompt(cameraAngle: CameraAngle | undefined): string {
+function buildAngleSystemPrompt(cameraAngle: CameraAngle | undefined, swimmer?: string): string {
+  const swimmerDirective = swimmer
+    ? `\n\n## Target Swimmer\nFocus your entire analysis on this specific swimmer: **${swimmer}**.\n` +
+      `Track this swimmer across all frames using their visual identifiers (cap color, suit color, lane position).\n` +
+      `Other swimmers in the frame may be referenced for comparison only — do not analyze them as primary subjects.`
+    : '';
+
   const base =
     `You are an expert swimming coach with deep knowledge of competitive swimming technique.\n` +
     `You analyze video frames to provide specific, actionable technique feedback.\n` +
     `Be precise about what you observe — reference body position, timing, and mechanics directly.\n` +
-    `Structure your feedback clearly with strengths, areas for improvement, and specific drills to fix issues.`;
+    `Structure your feedback clearly with strengths, areas for improvement, and specific drills to fix issues.` +
+    swimmerDirective;
 
   if (cameraAngle === 'overhead') {
     return (
@@ -157,6 +172,7 @@ function buildUserPrompt(
   strokeLabel: string,
   focusLabel: string,
   cameraAngle: CameraAngle | undefined,
+  swimmer?: string,
 ): string {
   const angleNote =
     cameraAngle === 'overhead'
@@ -167,8 +183,12 @@ function buildUserPrompt(
           ? `\nNote: This is underwater footage. Focus on catch mechanics, pull path, kick, and body rotation.`
           : '';
 
+  const swimmerLine = swimmer
+    ? `\nFocus exclusively on the swimmer matching this description: **${swimmer}**. Track them by their visual identifiers across all frames.`
+    : '';
+
   return `These are sequential frames from a ${strokeLabel} video.
-Please analyze the swimmer's ${focusLabel}.${angleNote}
+Please analyze the swimmer's ${focusLabel}.${angleNote}${swimmerLine}
 
 Provide your analysis in this structure:
 
@@ -321,14 +341,14 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
         : getTaxonomyByStroke(stroke);
       const taxonomySection = formatTaxonomyForPrompt(taxonomyEntries);
 
-      const angleSystemPrompt = buildAngleSystemPrompt(cameraAngle);
+      const angleSystemPrompt = buildAngleSystemPrompt(cameraAngle, args.swimmer);
       const systemPrompt =
         angleSystemPrompt +
         (taxonomySection.length > 0
           ? `\n\n---\n\n## Technique issues detectable from this camera angle\n\n${taxonomySection}`
           : '');
 
-      const userPrompt = buildUserPrompt(strokeLabel, focusLabel, cameraAngle);
+      const userPrompt = buildUserPrompt(strokeLabel, focusLabel, cameraAngle, args.swimmer);
 
       // Only send reference images for deck_side and underwater — the existing
       // reference images are all close-up shots that would confuse overhead analysis.
@@ -369,6 +389,7 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
         stroke,
         cameraAngle: cameraAngle ?? 'unspecified',
         focus,
+        swimmer: args.swimmer ?? null,
         range: args.from && args.to ? { from: args.from, to: args.to } : null,
         model: response.model,
         usage: response.usage,
