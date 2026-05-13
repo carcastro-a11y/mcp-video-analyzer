@@ -4,9 +4,9 @@ Frame samples illustrating proper hip position during breaststroke. Hips stay hi
 
 ## Frames
 
-Thirteen frames captured chronologically from a swim video, showing correct hip position across multiple stroke cycles from both surface and underwater angles.
+Sixteen frames captured from swim video, showing correct hip position across multiple stroke cycles from both surface and underwater angles. Frames 14–16 add additional reference samples.
 
-`frame_01.png` through `frame_13.png` — ordered by timestamp.
+`frame_01.png` through `frame_16.png` — ordered by timestamp.
 
 ## Purpose
 
