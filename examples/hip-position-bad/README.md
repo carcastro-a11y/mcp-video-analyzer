@@ -4,9 +4,9 @@ Frame samples illustrating poor hip position during breaststroke. Hips are dropp
 
 ## Frames
 
-Eighteen frames captured chronologically from a swim video, showing the hip-position issue across multiple stroke cycles from both surface and underwater angles.
+Twenty-one frames captured from swim video, showing the hip-position issue across multiple stroke cycles from both surface and underwater angles. Frames 19–21 add additional reference samples.
 
-`frame_01.png` through `frame_18.png` — ordered by timestamp.
+`frame_01.png` through `frame_21.png` — ordered by timestamp.
 
 ## Purpose
 
