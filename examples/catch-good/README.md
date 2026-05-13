@@ -4,9 +4,9 @@ Frame samples illustrating a strong catch phase during breaststroke. The hands s
 
 ## Frames
 
-Thirteen frames captured chronologically from a swim video, showing correct catch mechanics across multiple stroke cycles from both surface and underwater angles.
+Sixteen frames captured from swim video, showing correct catch mechanics across multiple stroke cycles from both surface and underwater angles. Frames 14–16 add additional reference samples.
 
-`frame_01.png` through `frame_13.png` — ordered by timestamp.
+`frame_01.png` through `frame_16.png` — ordered by timestamp.
 
 ## Purpose
 
