@@ -175,16 +175,16 @@ function InputPanel({ file, setFile, url, setUrl, type, setType, mediaPreviewUrl
 
         <div className="tip">
           <div className="tip__num">01</div>
-          <div className="tip__head">Capture Tip</div>
-          <h4 className="tip__title">Side view, <em>2 lengths</em></h4>
-          <p className="tip__body">Film from the side at water level for the cleanest read on body line, breath timing, and hip rotation.</p>
+          <div className="tip__head">How it works</div>
+          <h4 className="tip__title">1 fps scan, <em>then a burst</em></h4>
+          <p className="tip__body">Your clip is scanned one frame per second. The algorithm detects where the biggest technique changes happen — catch, breath, kick — and grabs a rapid 8 fps burst around each moment for a close look.</p>
         </div>
 
         <div className="tip" style={{ background: "linear-gradient(135deg, #fff, #dfeefe)" }}>
           <div className="tip__num">02</div>
-          <div className="tip__head">For Best Results</div>
-          <h4 className="tip__title">8–12 frames, <em>not more</em></h4>
-          <p className="tip__body">Claude reads each frame carefully. More frames isn't always better — pick a focused window.</p>
+          <div className="tip__head">What gets sent to Claude</div>
+          <h4 className="tip__title">Only the <em>key moments</em></h4>
+          <p className="tip__body">Not every frame makes the cut — only the ones where something meaningful is happening. Claude then reads each flagged burst against proven breaststroke technique and tells you exactly what it sees.</p>
         </div>
       </div>
     </div>
