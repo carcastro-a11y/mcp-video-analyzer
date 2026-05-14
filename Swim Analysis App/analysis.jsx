@@ -93,11 +93,18 @@ function AnalysisProgress({ stage, frames, framesTarget, error, onRetry, onCance
   );
 }
 
+const ANGLE_LABELS = {
+  overhead:   { label: "Overhead",    icon: "↓", note: "Body silhouette, hip level, phase timing" },
+  deck_side:  { label: "Deck / Side", icon: "→", note: "Body line, head position, breathing timing" },
+  underwater: { label: "Underwater",  icon: "↑", note: "Catch mechanics, pull path, kick" }
+};
+
 // ----------------------------------------------------------------
 // Results View — 3-card layout: Strengths / Fix These / Drills
 // ----------------------------------------------------------------
 function ResultsView({ result, frames, isVideo, config, mode, model, tokens, onNew, onSaveExport, onOpenFrame }) {
   const sections = useMemo(() => window.SwimAPI.parseResult(result.markdown), [result.markdown]);
+  const angleInfo = sections.cameraAngle ? ANGLE_LABELS[sections.cameraAngle] : null;
 
   return (
     <div className="results fade-in">
@@ -119,6 +126,16 @@ function ResultsView({ result, frames, isVideo, config, mode, model, tokens, onN
             {tokens ? ` · ${tokens.toLocaleString()} tokens` : ""}
           </div>
         </div>
+
+        {angleInfo && (
+          <div className="angle-badge">
+            <span className="angle-badge__icon">{angleInfo.icon}</span>
+            <div>
+              <span className="angle-badge__label">{angleInfo.label} view detected</span>
+              <span className="angle-badge__note">{angleInfo.note}</span>
+            </div>
+          </div>
+        )}
 
         <div className="report-grid">
           {sections.strengths.length > 0 && (
@@ -186,16 +203,18 @@ function ResultsView({ result, frames, isVideo, config, mode, model, tokens, onN
           )}
           <div className="scoreboard">
             <div className="scoreboard__item">
-              <div className="scoreboard__label">Stroke</div>
-              <div className="scoreboard__value" style={{ fontSize: 18 }}>Breast</div>
-            </div>
-            <div className="scoreboard__item">
               <div className="scoreboard__label">Frames</div>
               <div className="scoreboard__value">{frames.length}</div>
             </div>
             <div className="scoreboard__item">
+              <div className="scoreboard__label">Angle</div>
+              <div className="scoreboard__value" style={{ fontSize: 14 }}>
+                {angleInfo ? angleInfo.label : "—"}
+              </div>
+            </div>
+            <div className="scoreboard__item">
               <div className="scoreboard__label">{mode === "live" ? "Tokens" : "Mode"}</div>
-              <div className="scoreboard__value" style={{ fontSize: 18 }}>
+              <div className="scoreboard__value" style={{ fontSize: 16 }}>
                 {mode === "live" ? (tokens || 0).toLocaleString() : "Demo"}
               </div>
             </div>

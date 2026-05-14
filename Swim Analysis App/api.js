@@ -367,6 +367,23 @@
       `Every sentence must teach something a swimmer can act on in their next session. ` +
       `Only comment on what is physically visible — never speculate about mechanics you cannot see.`;
 
+    // Detection heuristics — used when angle is not pre-specified
+    const detectionGuide =
+      `\n\n## Identifying camera angle from frames\n` +
+      `Determine the angle FIRST using these visual cues, then apply the matching constraints:\n\n` +
+      `**overhead** — Camera looks straight down at the swimmer from above. ` +
+      `Body appears as a flat top-down silhouette with no side profile visible. ` +
+      `Lane lines run alongside the body. No waterline horizon. ` +
+      `Typical of broadcast stadium cameras, elevated stands, or drone footage.\n\n` +
+      `**deck_side** — Camera is at or near pool-deck level, viewing the swimmer from the side. ` +
+      `A clear waterline horizon divides above-water and below-water regions. ` +
+      `Head, shoulders, arm recovery, and hip level visible in profile. ` +
+      `Most common for poolside phone/camera footage at meets or practice.\n\n` +
+      `**underwater** — Camera is submerged or at the waterline looking into the water. ` +
+      `Strong blue/aqua colour cast. Bubbles may be visible. ` +
+      `No pool deck or sky in frame. Shows underwater mechanics directly.\n\n` +
+      `If the angle is ambiguous (e.g. elevated but not straight-down), pick the closest match and note it.`;
+
     let angleSection = "";
     if (cameraAngle === "overhead") {
       angleSection = `\n\n## Camera: OVERHEAD\n` +
@@ -381,9 +398,12 @@
         `Visible: catch mechanics, elbow angle, pull path, kick mechanics, streamline position, body rotation.\n` +
         `NOT visible — do not comment on: breathing timing, above-water head position.`;
     } else {
-      angleSection = `\n\n## Camera angle\n` +
-        `First identify the camera angle from the footage (overhead, side-on, or underwater). ` +
-        `Then strictly limit your analysis to mechanics that are physically visible from that angle.`;
+      // Auto-detect mode: include the detection guide and constraints for all three angles
+      angleSection = detectionGuide +
+        `\n\n**Once identified, apply these constraints strictly:**\n` +
+        `- overhead → no elbow/hand/catch/kick-mechanics commentary\n` +
+        `- deck_side → no catch depth, underwater pull path, or below-surface kick commentary\n` +
+        `- underwater → no breathing timing or above-water head position commentary`;
     }
 
     const taxonomyEntries = SWIM_TAXONOMY.filter(e => e.stroke === "breaststroke");
@@ -391,6 +411,8 @@
 
     const outputFormat =
       `\n\nReturn your analysis using EXACTLY this structure — no preamble, no extra sections:\n\n` +
+      `### Camera Angle\n` +
+      `[overhead | deck_side | underwater] — [one short phrase describing what clued you in]\n\n` +
       `### Strengths\n` +
       `- [One sentence, specific and technical. 2–4 bullets.]\n\n` +
       `### Fix These\n` +
@@ -400,7 +422,7 @@
       `2. [2–4 drills total]\n\n` +
       `### Coaching Note\n` +
       `[One sentence. The single most important thing for this swimmer to work on next.]\n\n` +
-      `Start immediately with "### Strengths". No opening paragraph.`;
+      `Start with "### Camera Angle". No opening paragraph.`;
 
     return base + angleSection +
       (taxonomySection ? `\n\n---\n\n## Breaststroke technique reference\n\n${taxonomySection}` : "") +
@@ -627,6 +649,9 @@
 
     const data = pickMock("breaststroke");
     const md = [
+      "### Camera Angle",
+      "deck_side — side profile visible with clear waterline horizon",
+      "",
       "### Strengths",
       data.strengths.slice(0, 3).map(s => `- ${s}`).join("\n"),
       "",
@@ -757,14 +782,19 @@
   // Parse markdown response into sections
   // ----------------------------------------------------------------
   function parseResult(markdown) {
-    const sections = { observe: "", strengths: [], improve: [], drills: [], summary: "" };
+    const sections = { observe: "", cameraAngle: "", strengths: [], improve: [], drills: [], summary: "" };
     if (!markdown) return sections;
     const parts = markdown.split(/^###\s+/m).filter(Boolean);
     for (const part of parts) {
       const lines = part.split("\n");
       const head = (lines[0] || "").trim().toLowerCase();
       const body = lines.slice(1).join("\n").trim();
-      if (head.includes("observe")) sections.observe = body;
+      if (head.includes("camera")) {
+        // Extract the angle key from the first word of the body line
+        const match = body.match(/\b(overhead|deck_side|underwater)\b/i);
+        sections.cameraAngle = match ? match[1].toLowerCase() : body.trim().split(/[\s—\-]/)[0].toLowerCase();
+      }
+      else if (head.includes("observe")) sections.observe = body;
       else if (head.includes("strength")) sections.strengths = extractBullets(body);
       else if (head.includes("fix") || head.includes("improve") || head.includes("area")) sections.improve = extractBullets(body);
       else if (head.includes("drill")) sections.drills = extractBullets(body);
