@@ -440,6 +440,49 @@
   }
 
   // ----------------------------------------------------------------
+  // Reference images — fetched from references/ and prepended to the
+  // user message so Claude sees labeled good/bad examples before the
+  // swimmer's frames. Mirrors buildReferenceBlocks() in the MCP server.
+  // Failures are silently skipped so a missing file never breaks analysis.
+  // ----------------------------------------------------------------
+  const REFERENCE_IMAGES = [
+    { path: "references/catch-good.png",  label: "Catch — GOOD: High elbow, forearm near-vertical before pull, hands set below elbows" },
+    { path: "references/catch-bad.png",   label: "Catch — BAD: Elbows dropped below hands, arms sweeping wide with no vertical forearm" },
+    { path: "references/hip-good.png",    label: "Hip position — GOOD: Hips high and flat, body nearly horizontal throughout the stroke" },
+    { path: "references/hip-bad.png",     label: "Hip position — BAD: Hips sagging low, swimmer in downhill posture creating frontal drag" },
+    { path: "references/head-good.png",   label: "Head/breath — GOOD: Head neutral in line with spine; chin forward (not up) during breath" },
+    { path: "references/head-bad.png",    label: "Head/breath — BAD: Head lifted too high during breath, seesaw effect sinks the hips" }
+  ];
+
+  async function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const m = /^data:([^;]+);base64,(.*)$/.exec(reader.result);
+        if (m) resolve({ mediaType: m[1], base64: m[2] });
+        else reject(new Error("bad data url"));
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function buildWebReferenceBlocks() {
+    const blocks = [{ type: "text", text: "## Technique Reference Examples\nThe following labeled images show correct (GOOD) and incorrect (BAD) breaststroke mechanics. Use them to calibrate what you observe in the swimmer's frames below." }];
+    for (const ref of REFERENCE_IMAGES) {
+      try {
+        const res = await fetch(ref.path);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const { mediaType, base64 } = await blobToBase64(blob);
+        blocks.push({ type: "text", text: ref.label });
+        blocks.push({ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } });
+      } catch (e) { /* skip — never break analysis over a missing reference */ }
+    }
+    return blocks;
+  }
+
+  // ----------------------------------------------------------------
   // Live analysis (Claude API)
   // ----------------------------------------------------------------
   async function liveAnalyze(opts, onStage) {
@@ -447,7 +490,13 @@
     const model = getModel();
     onStage && onStage("preparing");
 
-    const content = [];
+    const refBlocks = await buildWebReferenceBlocks().catch(() => []);
+    const content = [...refBlocks];
+
+    if (refBlocks.length > 1) {
+      content.push({ type: "text", text: "## Swimmer Footage\nAnalyze the following frames from the submitted footage:" });
+    }
+
     if (opts.type === "photo") {
       const { base64, mediaType } = await fileToBase64(opts.file);
       content.push({

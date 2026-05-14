@@ -93,6 +93,38 @@ function AnalysisProgress({ stage, frames, framesTarget, error, onRetry, onCance
   );
 }
 
+// ----------------------------------------------------------------
+// FrameFilmstrip — horizontal scrollable strip of all analyzed frames
+// Sits between the report cards and coaching note so users can
+// cross-reference frames while reading each bullet point.
+// ----------------------------------------------------------------
+function FrameFilmstrip({ frames, onOpenFrame }) {
+  if (!frames || frames.length === 0) return null;
+  return (
+    <div className="frame-filmstrip">
+      <div className="frame-filmstrip__head">
+        <span className="frame-filmstrip__label">Analyzed Frames</span>
+        <span className="frame-filmstrip__count">
+          {frames.length} frame{frames.length !== 1 ? "s" : ""} · click any to expand
+        </span>
+      </div>
+      <div className="frame-filmstrip__scroll">
+        {frames.map((f, i) => (
+          <button
+            key={i}
+            className="frame-filmstrip__thumb"
+            onClick={() => onOpenFrame(f.dataUrl)}
+            title={`Frame ${i + 1} — ${f.timestamp}`}
+          >
+            <img src={f.dataUrl} alt={`Frame ${i + 1}`} />
+            <span className="frame-filmstrip__time">{f.timestamp}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const ANGLE_LABELS = {
   overhead:   { label: "Overhead",    icon: "↓", note: "Body silhouette, hip level, phase timing" },
   deck_side:  { label: "Deck / Side", icon: "→", note: "Body line, head position, breathing timing" },
@@ -174,6 +206,8 @@ function ResultsView({ result, frames, isVideo, config, mode, model, tokens, onN
             </div>
           )}
         </div>
+
+        <FrameFilmstrip frames={frames} onOpenFrame={onOpenFrame} />
 
         {sections.summary && (
           <div className="coaching-note">
