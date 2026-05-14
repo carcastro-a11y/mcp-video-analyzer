@@ -224,29 +224,34 @@ export async function extractFrameBurst(
 
 /**
  * Extract frames at a fixed rate (dense sampling).
- * Useful for "watching" the full video — captures 1 frame per second by default.
+ * Useful for motion scanning — captures 1 frame per second by default.
+ * Supports optional time window via fromSeconds/toSeconds.
  */
 export async function extractDenseFrames(
   videoPath: string,
   outputDir: string,
-  options?: { fps?: number; maxFrames?: number },
+  options?: { fps?: number; maxFrames?: number; fromSeconds?: number; toSeconds?: number },
 ): Promise<IFrameResult[]> {
   const requestedFps = options?.fps ?? 1;
-  const maxFrames = options?.maxFrames ?? 60;
+  const maxFrames = options?.maxFrames ?? 120;
+  const fromSec = options?.fromSeconds ?? 0;
 
-  // Probe duration to cap frame count
-  const duration = await probeVideoDuration(videoPath);
-  const expectedFrames = Math.ceil(duration * requestedFps);
-  const effectiveFps = expectedFrames > maxFrames ? maxFrames / duration : requestedFps;
+  const totalDuration = await probeVideoDuration(videoPath);
+  const toSec = options?.toSeconds ?? totalDuration;
+  const windowDuration = Math.max(toSec - fromSec, 0.1);
+
+  const expectedFrames = Math.ceil(windowDuration * requestedFps);
+  const effectiveFps = expectedFrames > maxFrames ? maxFrames / windowDuration : requestedFps;
 
   const outputPattern = ffmpegPath_(join(outputDir, 'dense_%04d.jpg'));
 
+  // Fast keyframe seek when a start offset is given; -t limits to window duration
+  const args: string[] = [];
+  if (fromSec > 0) args.push('-ss', String(fromSec));
+  args.push('-i', videoPath, '-t', String(windowDuration), '-vf', `fps=${effectiveFps}`, '-q:v', '2', outputPattern, '-y');
+
   try {
-    await execFile(
-      ffmpegPath,
-      ['-i', videoPath, '-vf', `fps=${effectiveFps}`, '-q:v', '2', outputPattern, '-y'],
-      { timeout: 180000 },
-    );
+    await execFile(ffmpegPath, args, { timeout: 180000 });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
     throw new Error(`Dense frame extraction failed: ${msg}`, { cause: error });
@@ -255,7 +260,58 @@ export async function extractDenseFrames(
   const files = await listFrameFiles(outputDir, 'dense_');
 
   return files.slice(0, maxFrames).map((file, i) => ({
-    time: formatTimestamp(Math.round(i / effectiveFps)),
+    time: formatTimestamp(Math.round(fromSec + i / effectiveFps)),
+    filePath: join(outputDir, file),
+    mimeType: 'image/jpeg',
+  }));
+}
+
+/**
+ * Extract a short burst of frames centred on a specific timestamp.
+ * Uses a unique file prefix per call so multiple bursts can coexist in the same output dir.
+ *
+ * @param centerSeconds - The focal timestamp (seconds from video start)
+ * @param options.windowSeconds - Total window around the centre (default: 1.0s)
+ * @param options.fps - Frames per second within the burst (default: 8)
+ */
+export async function extractBurstAt(
+  videoPath: string,
+  outputDir: string,
+  centerSeconds: number,
+  options?: { windowSeconds?: number; fps?: number },
+): Promise<IFrameResult[]> {
+  const windowSeconds = options?.windowSeconds ?? 1.0;
+  const fps = options?.fps ?? 8;
+
+  const fromSec = Math.max(0, centerSeconds - windowSeconds / 2);
+
+  // Unique prefix per centre timestamp avoids file collisions across parallel bursts
+  const prefix = `burst_${Math.round(centerSeconds * 1000)}_`;
+  const outputPattern = ffmpegPath_(join(outputDir, `${prefix}%03d.jpg`));
+
+  try {
+    await execFile(
+      ffmpegPath,
+      [
+        '-ss', String(fromSec),
+        '-i', videoPath,
+        '-t', String(windowSeconds),
+        '-vf', `fps=${fps}`,
+        '-q:v', '2',
+        outputPattern,
+        '-y',
+      ],
+      { timeout: 30000 },
+    );
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Burst extraction at ${centerSeconds}s failed: ${msg}`, { cause: error });
+  }
+
+  const files = await listFrameFiles(outputDir, prefix);
+
+  return files.map((file, i) => ({
+    time: formatTimestamp(fromSec + i / fps),
     filePath: join(outputDir, file),
     mimeType: 'image/jpeg',
   }));

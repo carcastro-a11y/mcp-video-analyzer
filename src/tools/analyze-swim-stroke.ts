@@ -11,8 +11,10 @@ import {
   getTaxonomyByStroke,
   getTaxonomyByStrokeAndAngle,
 } from '../data/swim-taxonomy.js';
-import { deduplicateFrames } from '../processors/frame-dedup.js';
+import { deduplicateFrames, detectMotionPeaks } from '../processors/frame-dedup.js';
 import {
+  extractBurstAt,
+  extractDenseFrames,
   extractFrameBurst,
   formatTimestamp,
   parseTimestamp,
@@ -287,39 +289,65 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
         throw new UserError('Failed to download video for analysis.');
       }
 
-      await progress(30, 'Extracting frames...');
+      // ── Phase 1: 1fps motion scan ──────────────────────────────────
+      await progress(20, 'Scanning video for technique moments...');
 
-      const cycleFps = STROKE_CYCLE_FPS[stroke] ?? 1.5;
+      const totalDuration = await probeVideoDuration(videoPath);
+      const fromSec = args.from ? parseTimestamp(args.from) : 0;
+      const toSec = args.to ? parseTimestamp(args.to) : totalDuration;
 
-      let rawFrames;
-      if (args.from && args.to) {
-        const fromSeconds = parseTimestamp(args.from);
-        const toSeconds = parseTimestamp(args.to);
-        if (fromSeconds >= toSeconds) {
-          throw new UserError(
-            `"from" timestamp (${args.from}) must be before "to" timestamp (${args.to})`,
-          );
-        }
-        const windowDuration = toSeconds - fromSeconds;
+      if (fromSec >= toSec) {
+        throw new UserError(
+          `"from" timestamp (${args.from}) must be before "to" timestamp (${args.to})`,
+        );
+      }
+
+      const scanFrames = await extractDenseFrames(videoPath, tempDir, {
+        fps: 1,
+        maxFrames: 120,
+        ...(fromSec > 0 && { fromSeconds: fromSec }),
+        ...(toSec < totalDuration && { toSeconds: toSec }),
+      });
+
+      // ── Detect local motion peaks (stroke-phase transitions) ───────
+      const topN = Math.max(2, Math.floor(frameCount / 3));
+      const peakIndices = await detectMotionPeaks(scanFrames, { topN, minMagnitude: 6 });
+
+      // ── Phase 2: burst around each peak ───────────────────────────
+      await progress(40, `Found ${peakIndices.length} key moments, extracting bursts...`);
+
+      let rawFrames: IFrameResult[];
+
+      if (peakIndices.length === 0 || scanFrames.length === 0) {
+        // Fallback: no detectable peaks — use stroke-cycle uniform sampling
+        const cycleFps = STROKE_CYCLE_FPS[stroke] ?? 1.5;
+        const windowDuration = toSec - fromSec;
         const effectiveCount = Math.min(frameCount, Math.ceil(windowDuration * cycleFps));
-        rawFrames = await extractFrameBurst(videoPath, tempDir, args.from, args.to, effectiveCount);
-      } else {
-        const totalDuration = await probeVideoDuration(videoPath);
-        const effectiveCount = Math.min(frameCount, Math.ceil(totalDuration * cycleFps));
         rawFrames = await extractFrameBurst(
           videoPath,
           tempDir,
-          '0:00',
-          formatTimestamp(totalDuration),
+          formatTimestamp(fromSec),
+          formatTimestamp(toSec),
           effectiveCount,
         );
+      } else {
+        const burstResults: IFrameResult[][] = [];
+        for (const idx of peakIndices) {
+          const centerSec = parseTimestamp(scanFrames[idx].time);
+          const burst = await extractBurstAt(videoPath, tempDir, centerSec, {
+            windowSeconds: 1.0,
+            fps: 8,
+          }).catch(() => [] as IFrameResult[]);
+          burstResults.push(burst);
+        }
+        rawFrames = burstResults.flat();
       }
 
       if (rawFrames.length === 0) {
         throw new UserError('No frames could be extracted from the video.');
       }
 
-      await progress(50, `Extracted ${rawFrames.length} frames, optimizing...`);
+      await progress(55, `Extracted ${rawFrames.length} frames, optimizing...`);
 
       const optimizedPaths = await optimizeFrames(
         rawFrames.map((f: IFrameResult) => f.filePath),
@@ -331,11 +359,10 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
         filePath: optimizedPaths[i] ?? frame.filePath,
       }));
 
-      // Tighter threshold (3 vs default 5): stroke-cycle sampling already spaces frames
-      // correctly, so near-identical frames are genuinely redundant glide/hold phases.
+      // Burst frames are already dense; dedup removes near-identical frames within each burst.
       frames = await deduplicateFrames(frames, 3).catch(() => frames);
 
-      await progress(65, `Sending ${frames.length} frames to Claude for analysis...`);
+      await progress(70, `Sending ${frames.length} frames to Claude for analysis...`);
 
       // Build image content blocks for Claude API
       const imageBlocks: Anthropic.ImageBlockParam[] = [];

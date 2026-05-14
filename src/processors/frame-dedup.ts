@@ -130,3 +130,70 @@ export async function deduplicateFrames(
 
   return result;
 }
+
+/**
+ * Find frames that are local motion peaks in a 1fps scan sequence.
+ *
+ * Computes dHash Hamming distance between consecutive frames to build a motion
+ * magnitude signal, then returns indices of local maxima above the threshold.
+ * Use these indices to target burst extraction at exactly the moments where
+ * stroke phase transitions occur.
+ *
+ * @param frames - Frames in chronological order (typically a 1fps scan)
+ * @param options.topN - Maximum peaks to return (default: 5)
+ * @param options.minMagnitude - Minimum Hamming distance to qualify as a peak (default: 6, range 0–64)
+ * @returns Indices into `frames`, sorted chronologically
+ */
+export async function detectMotionPeaks(
+  frames: IFrameResult[],
+  options?: { topN?: number; minMagnitude?: number },
+): Promise<number[]> {
+  const topN = options?.topN ?? 5;
+  const minMagnitude = options?.minMagnitude ?? 6;
+
+  if (frames.length < 2) {
+    return frames.length === 1 ? [0] : [];
+  }
+
+  const hashes = await Promise.all(
+    frames.map((f) => computeDHash(f.filePath).catch(() => null)),
+  );
+
+  // mag[i] = motion between frame i and frame i+1
+  const mag: number[] = new Array(frames.length).fill(0);
+  for (let i = 0; i < frames.length - 1; i++) {
+    const a = hashes[i];
+    const b = hashes[i + 1];
+    mag[i] = a && b ? hammingDistance(a, b) : 0;
+  }
+
+  // Find local maxima; assign burst center to frame i+1 (post-transition position)
+  const peaks: Array<{ index: number; magnitude: number }> = [];
+  for (let i = 0; i < mag.length; i++) {
+    if (mag[i] < minMagnitude) continue;
+    const prevMag = i > 0 ? mag[i - 1] : -1;
+    const nextMag = i < mag.length - 1 ? mag[i + 1] : -1;
+    if (mag[i] >= prevMag && mag[i] >= nextMag) {
+      const frameIdx = Math.min(i + 1, frames.length - 1);
+      peaks.push({ index: frameIdx, magnitude: mag[i] });
+    }
+  }
+
+  if (peaks.length === 0) return [];
+
+  // Deduplicate peaks that map to the same frame index, keeping highest magnitude
+  const unique = new Map<number, number>();
+  for (const p of peaks) {
+    const existing = unique.get(p.index);
+    if (existing === undefined || p.magnitude > existing) {
+      unique.set(p.index, p.magnitude);
+    }
+  }
+
+  return [...unique.entries()]
+    .map(([index, magnitude]) => ({ index, magnitude }))
+    .sort((a, b) => b.magnitude - a.magnitude)
+    .slice(0, topN)
+    .sort((a, b) => a.index - b.index)
+    .map((p) => p.index);
+}

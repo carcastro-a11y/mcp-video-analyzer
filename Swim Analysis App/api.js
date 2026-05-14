@@ -25,7 +25,40 @@
   };
 
   // ----------------------------------------------------------------
-  // Frame extraction from video
+  // ----------------------------------------------------------------
+  // Motion peak detection — mirrors detectMotionPeaks in frame-dedup.ts
+  // Takes the 8x8 grayscale pixel arrays from the scan phase.
+  // ----------------------------------------------------------------
+  function detectWebMotionPeaks(scanPixels, topN, minMag) {
+    minMag = minMag == null ? 8 : minMag;
+    const mags = [];
+    for (let i = 0; i < scanPixels.length - 1; i++) {
+      mags.push(pixelDistance(scanPixels[i], scanPixels[i + 1]));
+    }
+    mags.push(0); // sentinel for last frame
+
+    const peaks = [];
+    for (let i = 0; i < mags.length; i++) {
+      if (mags[i] < minMag) continue;
+      const prev = i > 0 ? mags[i - 1] : -1;
+      const next = i < mags.length - 1 ? mags[i + 1] : -1;
+      if (mags[i] >= prev && mags[i] >= next) {
+        // Burst centre is between frame i and i+1 (1fps → centre = i + 0.5 seconds)
+        peaks.push({ t: i + 0.5, mag: mags[i] });
+      }
+    }
+
+    return peaks
+      .sort((a, b) => b.mag - a.mag)
+      .slice(0, topN)
+      .sort((a, b) => a.t - b.t)
+      .map(p => p.t);
+  }
+
+  // ----------------------------------------------------------------
+  // Frame extraction — two-phase: 1fps motion scan → burst at peaks
+  // Falls back to uniform stroke-cycle sampling if no peaks found.
+  // Mirrors the two-phase logic in analyze-swim-stroke.ts.
   // ----------------------------------------------------------------
   async function extractFrames(file, count, onProgress, stroke) {
     return new Promise((resolve, reject) => {
@@ -37,39 +70,87 @@
       video.preload = "auto";
       video.crossOrigin = "anonymous";
 
-      const frames = [];
-      let canvas, ctx;
-
       video.addEventListener("loadedmetadata", async () => {
         const duration = isFinite(video.duration) ? video.duration : 5;
-        const cycleFps = STROKE_CYCLE_FPS[stroke] ?? 1.5;
-        const strokeBasedCount = Math.ceil(duration * cycleFps);
-        const effectiveCount = Math.min(count, strokeBasedCount);
 
+        // Full-res canvas for final frames
         const w = Math.min(video.videoWidth || 1280, 1280);
         const h = Math.round(w * ((video.videoHeight || 720) / (video.videoWidth || 1280)));
-        canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        ctx = canvas.getContext("2d");
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
 
-        for (let i = 0; i < effectiveCount; i++) {
-          const t = duration * ((i + 0.5) / effectiveCount);
+        // Tiny canvas for 8x8 motion scan (no quality needed)
+        const miniCanvas = document.createElement("canvas");
+        miniCanvas.width = 8; miniCanvas.height = 8;
+        const miniCtx = miniCanvas.getContext("2d");
+
+        // ── Phase 1: 1fps scan ──────────────────────────────────────
+        const scanCount = Math.min(120, Math.ceil(duration));
+        const scanPixels = [];
+        for (let i = 0; i < scanCount; i++) {
+          const t = i;
           try {
             await seekTo(video, t);
-            ctx.drawImage(video, 0, 0, w, h);
-            const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
-            const frame = {
-              timestamp: formatTime(t),
-              t,
-              dataUrl
-            };
-            frames.push(frame);
-            if (onProgress) onProgress(i + 1, effectiveCount, frame);
+            miniCtx.drawImage(video, 0, 0, 8, 8);
+            const data = miniCtx.getImageData(0, 0, 8, 8).data;
+            const gray = [];
+            for (let j = 0; j < data.length; j += 4) {
+              gray.push(0.299 * data[j] + 0.587 * data[j + 1] + 0.114 * data[j + 2]);
+            }
+            scanPixels.push(gray);
           } catch (e) {
-            console.warn("seek failed", e);
+            scanPixels.push(null);
           }
         }
+
+        // ── Detect motion peaks ─────────────────────────────────────
+        const topN = Math.max(2, Math.floor(count / 3));
+        const peakTimestamps = detectWebMotionPeaks(scanPixels, topN);
+
+        // ── Phase 2: burst around each peak ────────────────────────
+        const frames = [];
+        const BURST_FPS = 8;
+        const HALF_WINDOW = 0.5; // ±0.5s around peak
+        const burstStep = 1 / BURST_FPS;
+
+        if (peakTimestamps.length > 0) {
+          const estimatedTotal = peakTimestamps.length * BURST_FPS;
+          for (let pi = 0; pi < peakTimestamps.length; pi++) {
+            const center = peakTimestamps[pi];
+            const fromT = Math.max(0, center - HALF_WINDOW);
+            for (let j = 0; j < BURST_FPS; j++) {
+              const t = fromT + j * burstStep;
+              if (t >= duration) break;
+              try {
+                await seekTo(video, t);
+                ctx.drawImage(video, 0, 0, w, h);
+                const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+                const frame = { timestamp: formatTime(t), t, dataUrl };
+                frames.push(frame);
+                if (onProgress) onProgress(frames.length, estimatedTotal, frame);
+              } catch (e) { /* skip bad seek */ }
+            }
+          }
+        }
+
+        // ── Fallback: uniform stroke-cycle sampling ─────────────────
+        if (frames.length === 0) {
+          const cycleFps = STROKE_CYCLE_FPS[stroke] ?? 1.5;
+          const effectiveCount = Math.min(count, Math.ceil(duration * cycleFps));
+          for (let i = 0; i < effectiveCount; i++) {
+            const t = duration * ((i + 0.5) / effectiveCount);
+            try {
+              await seekTo(video, t);
+              ctx.drawImage(video, 0, 0, w, h);
+              const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+              const frame = { timestamp: formatTime(t), t, dataUrl };
+              frames.push(frame);
+              if (onProgress) onProgress(i + 1, effectiveCount, frame);
+            } catch (e) { /* skip bad seek */ }
+          }
+        }
+
         URL.revokeObjectURL(url);
         resolve(frames);
       });
