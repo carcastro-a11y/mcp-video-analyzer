@@ -84,14 +84,18 @@ function App() {
           frames = await window.SwimAPI.extractFrames(file, 20, (i, total, f) => {
             if (f) setExtractedFrames((prev) => [...prev, f]);
           }, "breaststroke");
+        } else if (url && window.isYouTubeUrl && window.isYouTubeUrl(url)) {
+          // YouTube URLs can't be frame-extracted in the browser (cross-origin restriction)
+          const err = new Error("YouTube videos can't be analyzed directly.");
+          err.title = "YouTube not supported";
+          err.message = "Browsers can't extract frames from YouTube due to security restrictions. Download the video as .mp4 (use yt-dlp or any online downloader) and upload it instead.";
+          throw err;
         } else {
-          // URL provided — generate mock frames since cross-origin video is unreliable
-          for (let i = 0; i < 10; i++) {
-            const f = window.SwimAPI.makeMockFrame(i, 10, "breaststroke");
-            await new Promise((r) => setTimeout(r, 90));
-            setExtractedFrames((prev) => [...prev, f]);
-            frames.push(f);
-          }
+          // Other direct video URLs — attempt extraction, fallback to notice
+          const err = new Error("Remote video URLs can't be frame-extracted in the browser.");
+          err.title = "URL videos not supported";
+          err.message = "Download the video as .mp4 and upload it as a file for a full analysis.";
+          throw err;
         }
       } else {
         // Photo — single "frame" from image

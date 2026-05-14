@@ -300,14 +300,50 @@ function Lightbox({ src, onClose }) {
 }
 
 // ----------------------------------------------------------------
+// YouTube URL helpers
+// ----------------------------------------------------------------
+function getYouTubeId(url) {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
+    /youtube\.com\/.*[?&]v=([A-Za-z0-9_-]{11})/
+  ];
+  for (const re of patterns) {
+    const m = url.match(re);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function isYouTubeUrl(url) {
+  return !!getYouTubeId(url);
+}
+
+// ----------------------------------------------------------------
 // Generic file media (image or video) preview
 // ----------------------------------------------------------------
 function FilePreviewMedia({ file, url, type }) {
+  const ytId = url ? getYouTubeId(url) : null;
+
   const src = useMemo(() => {
+    if (ytId) return null; // handled separately via iframe
     if (url) return url;
     if (file) return URL.createObjectURL(file);
     return null;
-  }, [file, url]);
+  }, [file, url, ytId]);
+
+  if (ytId) {
+    return (
+      <iframe
+        src={`https://www.youtube.com/embed/${ytId}`}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        style={{ width: "100%", height: "100%", border: 0, borderRadius: 6 }}
+        title="YouTube preview"
+      />
+    );
+  }
+
   if (!src) return null;
   if (type === "video") {
     return <video src={src} controls playsInline muted />;
@@ -316,5 +352,6 @@ function FilePreviewMedia({ file, url, type }) {
 }
 
 Object.assign(window, {
-  Icons, StatusPill, Header, DemoBanner, SettingsModal, Lightbox, FilePreviewMedia
+  Icons, StatusPill, Header, DemoBanner, SettingsModal, Lightbox, FilePreviewMedia,
+  getYouTubeId, isYouTubeUrl
 });

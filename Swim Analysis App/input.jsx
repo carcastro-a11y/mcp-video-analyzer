@@ -137,6 +137,12 @@ function InputPanel({ file, setFile, url, setUrl, type, setType, mediaPreviewUrl
               <div className="preview__size">
                 {file ? humanSize(file.size) : "remote URL"}
               </div>
+              {!file && url && window.isYouTubeUrl && window.isYouTubeUrl(url) && (
+                <div className="youtube-notice">
+                  <strong>YouTube can't be frame-extracted in the browser.</strong>
+                  <span> Download the video as .mp4 and upload it above for a full analysis.</span>
+                </div>
+              )}
               <button className="preview__clear" onClick={clearMedia}>Replace</button>
             </div>
           </div>

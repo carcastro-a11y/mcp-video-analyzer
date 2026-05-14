@@ -2713,6 +2713,22 @@ input, textarea, select { font: inherit; }
   color: var(--ink-faint);
 }
 
+/* ── YouTube / remote URL notice ────────────────────────────── */
+.youtube-notice {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  line-height: 1.45;
+  color: #78350f;
+}
+.youtube-notice strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
 /* ── Inline frame filmstrip ──────────────────────────────────── */
 .frame-filmstrip {
   margin-bottom: 20px;
