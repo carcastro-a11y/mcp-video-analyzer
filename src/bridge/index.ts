@@ -128,9 +128,14 @@ app.post('/analyze', upload.single('video'), async (req, res) => {
   const stroke = (req.body.stroke as string) || 'breaststroke';
   const swimmer = (req.body.swimmer as string) || undefined;
   const notes = (req.body.notes as string) || undefined;
+  const cameraAngle = (req.body.cameraAngle as string) || undefined;
   const laneNum = req.body.lane ? parseInt(req.body.lane as string, 10) : undefined;
   const totalLanes = req.body.totalLanes ? parseInt(req.body.totalLanes as string, 10) : undefined;
-  const laneSpec = laneNum && totalLanes ? { number: laneNum, total: totalLanes } : undefined;
+  // Lane crop is only valid for overhead shots — side/underwater lanes aren't horizontal strips
+  const laneSpec =
+    cameraAngle === 'overhead' && laneNum && totalLanes
+      ? { number: laneNum, total: totalLanes }
+      : undefined;
   const frameCount = 12;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

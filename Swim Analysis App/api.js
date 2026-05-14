@@ -511,7 +511,8 @@
     formData.append("stroke", opts.stroke || "breaststroke");
     if (opts.swimmer) formData.append("swimmer", opts.swimmer);
     if (opts.notes) formData.append("notes", opts.notes);
-    if (opts.lane) {
+    if (opts.cameraAngle) formData.append("cameraAngle", opts.cameraAngle);
+    if (opts.cameraAngle === "overhead" && opts.lane) {
       formData.append("lane", String(opts.lane));
       formData.append("totalLanes", String(opts.totalLanes || 8));
     }

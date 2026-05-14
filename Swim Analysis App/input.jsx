@@ -231,7 +231,39 @@ function ConfigPanel({ type, config, setConfig, canAnalyze, onAnalyze, model, li
       {type === "video" && (
         <div className="config__row">
           <div className="config__label">
-            <span className="config__label-tag">02 · Lane crop</span>
+            <span className="config__label-tag">02 · Shot type</span>
+            <span className="config__label-title">Camera <em>angle</em></span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <select
+              className="url-box__input"
+              style={{ maxWidth: 200 }}
+              value={config.cameraAngle || "auto"}
+              onChange={(e) => {
+                const angle = e.target.value;
+                setConfig({ ...config, cameraAngle: angle, lane: angle !== "overhead" ? 0 : config.lane });
+              }}
+            >
+              <option value="auto">Auto-detect</option>
+              <option value="overhead">Overhead (top-down)</option>
+              <option value="deck_side">Deck / Side</option>
+              <option value="underwater">Underwater</option>
+            </select>
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--ink-faint)", lineHeight: 1.4 }}>
+              {config.cameraAngle === "overhead"
+                ? "Overhead confirmed — lane crop is available below."
+                : config.cameraAngle === "auto"
+                ? "Claude will identify the angle from the frames. Lane crop is only available for overhead shots."
+                : "Lane crop is not used for this angle — Claude analyzes the full frame."}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {type === "video" && config.cameraAngle === "overhead" && (
+        <div className="config__row">
+          <div className="config__label">
+            <span className="config__label-tag">03 · Lane crop</span>
             <span className="config__label-title">Peak detection <em>scope</em></span>
           </div>
           <div style={{ flex: 1 }}>
@@ -265,8 +297,8 @@ function ConfigPanel({ type, config, setConfig, canAnalyze, onAnalyze, model, li
             </div>
             <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--ink-faint)", lineHeight: 1.4 }}>
               {config.lane > 0
-                ? "Peak detection will crop to this lane before hashing — peaks from other lanes won't trigger frame selection. Best for overhead footage. Bridge mode only."
-                : "Analyze the full frame. Use lane crop for overhead meet footage with multiple swimmers."}
+                ? `Peak detection crops to lane ${config.lane} of ${config.totalLanes || 8} before hashing — motion in other lanes won't pull key frames. Bridge mode only.`
+                : "Select a lane to restrict peak detection to that swimmer's column. Leave on All lanes to scan the full frame."}
             </p>
           </div>
         </div>

@@ -42,6 +42,7 @@ function App() {
     detail: "standard",
     swimmer: "",
     notes: "",
+    cameraAngle: "auto",
     lane: 0,
     totalLanes: 8
   });
@@ -134,8 +135,9 @@ function App() {
         detail: "standard",
         swimmer: config.swimmer || undefined,
         notes: config.notes || undefined,
-        lane: config.lane > 0 ? config.lane : undefined,
-        totalLanes: config.lane > 0 ? config.totalLanes : undefined
+        cameraAngle: config.cameraAngle !== "auto" ? config.cameraAngle : undefined,
+        lane: config.cameraAngle === "overhead" && config.lane > 0 ? config.lane : undefined,
+        totalLanes: config.cameraAngle === "overhead" && config.lane > 0 ? config.totalLanes : undefined
       };
       const out = await window.SwimAPI.analyze(opts, setStage);
 
