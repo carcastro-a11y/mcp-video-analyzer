@@ -525,10 +525,11 @@
     });
 
     if (!res.ok) {
-      const text = await res.text();
-      const err = new Error(`Bridge error ${res.status}`);
+      let body = {};
+      try { body = await res.json(); } catch { body = { error: await res.text() }; }
+      const err = new Error(body.error || `Bridge error ${res.status}`);
       err.status = res.status;
-      err.body = text;
+      err.code = body.code;
       throw err;
     }
 

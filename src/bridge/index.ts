@@ -259,7 +259,18 @@ app.post('/analyze', upload.single('video'), async (req, res) => {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[bridge] error:', msg);
-    res.status(500).json({ error: msg });
+
+    // Surface Anthropic API errors with an appropriate HTTP status so the
+    // web app can show a specific message instead of a generic 500.
+    if (msg.includes('529') || msg.toLowerCase().includes('overloaded')) {
+      res.status(503).json({ error: 'Claude API is overloaded. Wait a moment and retry.', code: 'overloaded' });
+    } else if (msg.includes('401') || msg.toLowerCase().includes('authentication')) {
+      res.status(401).json({ error: 'Invalid Anthropic API key in bridge .env', code: 'auth' });
+    } else if (msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
+      res.status(429).json({ error: 'Claude API rate limit hit. Wait a moment and retry.', code: 'rate_limit' });
+    } else {
+      res.status(500).json({ error: msg });
+    }
   } finally {
     fs.unlink(videoPath, () => {});
   }

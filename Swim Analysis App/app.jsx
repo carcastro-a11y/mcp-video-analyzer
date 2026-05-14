@@ -172,11 +172,14 @@ function App() {
       console.error(e);
       let title = "Analysis failed";
       let message = e.message || "Something went wrong. Try again?";
-      if (e.status === 401) {
+      if (e.status === 503 || e.code === "overloaded" || (e.message || "").includes("overloaded")) {
+        title = "Claude is overloaded";
+        message = "Anthropic's API is under heavy load right now. Wait 20–30 seconds and retry.";
+      } else if (e.status === 401) {
         title = "Invalid API key";
         message = "Open settings and verify your Anthropic key.";
         setSettingsOpen(true);
-      } else if (e.status === 429) {
+      } else if (e.status === 429 || e.code === "rate_limit") {
         title = "Rate limited";
         message = "Claude API is rate-limiting you. Wait a moment and retry.";
       } else if (!navigator.onLine) {
