@@ -35,12 +35,11 @@ function App() {
   const [type, setType] = useState(null);
 
   // ---- Config state ----
+  // Stroke, focus, cameraAngle, and frame count are fixed — only swimmer and notes are user-editable.
   const [config, setConfig] = useState({
-    stroke: "freestyle",
-    focus: ["arm_entry", "body_rotation", "head_position"],
+    stroke: "breaststroke",
+    focus: ["overall"],
     detail: "standard",
-    frames: 12,
-    cameraAngle: "deck_side",
     swimmer: "",
     notes: ""
   });
@@ -81,14 +80,14 @@ function App() {
 
       if (isVideo) {
         if (file) {
-          // Real extraction from uploaded file
-          frames = await window.SwimAPI.extractFrames(file, config.frames, (i, total, f) => {
-            setExtractedFrames((prev) => [...prev, f]);
-          }, config.stroke);
+          // Real extraction from uploaded file — frame count governed by two-phase algorithm
+          frames = await window.SwimAPI.extractFrames(file, 20, (i, total, f) => {
+            if (f) setExtractedFrames((prev) => [...prev, f]);
+          }, "breaststroke");
         } else {
           // URL provided — generate mock frames since cross-origin video is unreliable
-          for (let i = 0; i < config.frames; i++) {
-            const f = window.SwimAPI.makeMockFrame(i, config.frames, config.stroke);
+          for (let i = 0; i < 10; i++) {
+            const f = window.SwimAPI.makeMockFrame(i, 10, "breaststroke");
             await new Promise((r) => setTimeout(r, 90));
             setExtractedFrames((prev) => [...prev, f]);
             frames.push(f);
@@ -112,8 +111,8 @@ function App() {
 
       // Inject mock frames in demo mode when file path failed too
       if (!live && frames.length === 0) {
-        for (let i = 0; i < (isVideo ? config.frames : 1); i++) {
-          const f = window.SwimAPI.makeMockFrame(i, config.frames, config.stroke);
+        for (let i = 0; i < (isVideo ? 10 : 1); i++) {
+          const f = window.SwimAPI.makeMockFrame(i, 10, "breaststroke");
           frames.push(f);
           setExtractedFrames((prev) => [...prev, f]);
           await new Promise((r) => setTimeout(r, 80));
@@ -124,10 +123,9 @@ function App() {
         type: isVideo ? "video" : "photo",
         file,
         frames,
-        stroke: config.stroke,
-        focus: config.focus,
-        detail: config.detail,
-        cameraAngle: config.cameraAngle,
+        stroke: "breaststroke",
+        focus: ["overall"],
+        detail: "standard",
         swimmer: config.swimmer || undefined,
         notes: config.notes || undefined
       };
@@ -142,8 +140,8 @@ function App() {
         id: uuid(),
         type: isVideo ? "video" : "photo",
         thumbnail: thumb,
-        stroke: config.stroke,
-        focus: config.focus,
+        stroke: "breaststroke",
+        focus: ["overall"],
         analyzedAt: new Date().toISOString(),
         result: out.markdown,
         frames: frames.slice(0, 8).map((f) => ({ timestamp: f.timestamp, dataUrl: f.dataUrl })),
@@ -221,14 +219,14 @@ function App() {
               <div className="section__head">
                 <span className="section__num">§ <em>03</em></span>
                 <div>
-                  <h2 className="section__title">Set the <em>read</em></h2>
-                  <p className="section__sub">Tell the coach what stroke this is and which phases matter most.</p>
+                  <h2 className="section__title">Ready to <em>analyze</em></h2>
+                  <p className="section__sub">Breaststroke technique read — full coverage, camera angle auto-detected.</p>
                 </div>
                 <div className="section__aside">
                   {hasInput ?
                 <React.Fragment>
                       <strong>{type === "video" ? "Video" : "Photo"} loaded</strong>
-                      {type === "video" ? "Will extract frames evenly" : "Single-frame analysis"}
+                      {type === "video" ? "1fps scan + burst at key moments" : "Single-frame analysis"}
                     </React.Fragment> :
 
                 <React.Fragment>
@@ -313,7 +311,7 @@ function App() {
             <AnalysisProgress
             stage={stage}
             frames={extractedFrames}
-            framesTarget={type === "video" ? config.frames : 1}
+            framesTarget={type === "video" ? Math.max(extractedFrames.length, 8) : 1}
             error={error}
             isVideo={type === "video"}
             stroke={config.stroke}

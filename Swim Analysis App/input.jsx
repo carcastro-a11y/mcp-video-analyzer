@@ -192,141 +192,46 @@ function InputPanel({ file, setFile, url, setUrl, type, setType, mediaPreviewUrl
 }
 
 // ----------------------------------------------------------------
-// Config panel — stroke, focus, camera angle, swimmer, detail, frames, CTA
+// Config panel — breaststroke-only: swimmer identifier + CTA
+// Stroke, focus, camera angle, and frame count are all determined
+// automatically — no user selection needed.
 // ----------------------------------------------------------------
 function ConfigPanel({ type, config, setConfig, canAnalyze, onAnalyze, model, live }) {
   const isVideo = type === "video";
-
   function setKey(k, v) { setConfig({ ...config, [k]: v }); }
-
-  function toggleFocus(key) {
-    const cur = config.focus || [];
-    if (cur.includes(key)) {
-      setKey("focus", cur.filter(x => x !== key));
-    } else {
-      setKey("focus", [...cur, key]);
-    }
-  }
 
   return (
     <div className="config">
       <div className="config__row">
         <div className="config__label">
-          <span className="config__label-tag">01 · Stroke</span>
-          <span className="config__label-title">Which <em>stroke</em></span>
-        </div>
-        <div className="seg">
-          {STROKES.map(s => (
-            <button
-              key={s.key}
-              className="seg__btn"
-              aria-pressed={config.stroke === s.key}
-              onClick={() => setKey("stroke", s.key)}
-            >{s.label}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="config__row">
-        <div className="config__label">
-          <span className="config__label-tag">02 · Focus Areas</span>
-          <span className="config__label-title">What to <em>watch</em></span>
-        </div>
-        <div className="chips">
-          {FOCUSES.map(f => (
-            <button
-              key={f.key}
-              className="chip"
-              aria-pressed={(config.focus || []).includes(f.key)}
-              onClick={() => toggleFocus(f.key)}
-            >
-              <span className="chip__check"><Icons.Check style={{ width: 8, height: 8 }} /></span>
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="config__row">
-        <div className="config__label">
-          <span className="config__label-tag">03 · Camera Angle</span>
-          <span className="config__label-title">How <em>filmed</em></span>
-        </div>
-        <div className="seg">
-          {CAMERA_ANGLES.map(a => (
-            <button
-              key={a.key}
-              className="seg__btn"
-              aria-pressed={config.cameraAngle === a.key}
-              onClick={() => setKey("cameraAngle", a.key)}
-            >{a.label}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="config__row">
-        <div className="config__label">
-          <span className="config__label-tag">04 · Swimmer</span>
+          <span className="config__label-tag">01 · Swimmer</span>
           <span className="config__label-title">Focus on <em>who</em></span>
         </div>
-        <input
-          type="text"
-          className="url-box__input"
-          style={{ maxWidth: 340 }}
-          placeholder="e.g. lane 4, blue cap and blue suit (optional)"
-          value={config.swimmer || ""}
-          onChange={(e) => setKey("swimmer", e.target.value)}
-        />
+        <div style={{ flex: 1 }}>
+          <input
+            type="text"
+            className="url-box__input"
+            style={{ maxWidth: 400 }}
+            placeholder="e.g. lane 4, blue cap and blue suit (optional)"
+            value={config.swimmer || ""}
+            onChange={(e) => setKey("swimmer", e.target.value)}
+          />
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--ink-faint)", lineHeight: 1.4 }}>
+            If multiple swimmers are in frame, describe the one to analyze. Leave blank to analyze the most visible swimmer.
+          </p>
+        </div>
       </div>
-
-      {isVideo && (
-        <React.Fragment>
-          <div className="config__row">
-            <div className="config__label">
-              <span className="config__label-tag">05 · Detail Level</span>
-              <span className="config__label-title">How <em>deep</em></span>
-            </div>
-            <div className="seg">
-              {["brief", "standard", "detailed"].map(d => (
-                <button
-                  key={d}
-                  className="seg__btn"
-                  aria-pressed={config.detail === d}
-                  onClick={() => setKey("detail", d)}
-                >{d}</button>
-              ))}
-            </div>
-          </div>
-
-          <div className="config__row">
-            <div className="config__label">
-              <span className="config__label-tag">06 · Frame Count</span>
-              <span className="config__label-title">Frames <em>extracted</em></span>
-            </div>
-            <div className="slider">
-              <input
-                type="range"
-                min="4"
-                max="20"
-                step="1"
-                value={config.frames}
-                onChange={(e) => setKey("frames", parseInt(e.target.value))}
-              />
-              <div className="slider__value">
-                {config.frames}
-                <small>FRAMES</small>
-              </div>
-            </div>
-          </div>
-        </React.Fragment>
-      )}
 
       <div className="cta-row">
         <div className="cta-row__model">
           <div style={{ fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-faint)" }}>Model</div>
           <div><strong>{model === "claude-opus-4-7" ? "Opus 4.7" : "Sonnet 4.6"}</strong> · {live ? "Live" : "Demo"}</div>
         </div>
-        <div></div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+          <div style={{ fontSize: 11, color: "var(--ink-faint)" }}>
+            Breaststroke · Full technique · Auto camera detection
+          </div>
+        </div>
         <button className="btn-analyze" onClick={onAnalyze} disabled={!canAnalyze}>
           <span>Analyze {isVideo ? "Video" : "Photo"}</span>
           <span className="btn-analyze__arrow"><Icons.Arrow /></span>

@@ -94,15 +94,10 @@ function AnalysisProgress({ stage, frames, framesTarget, error, onRetry, onCance
 }
 
 // ----------------------------------------------------------------
-// Results View
+// Results View — 3-card layout: Strengths / Fix These / Drills
 // ----------------------------------------------------------------
 function ResultsView({ result, frames, isVideo, config, mode, model, tokens, onNew, onSaveExport, onOpenFrame }) {
   const sections = useMemo(() => window.SwimAPI.parseResult(result.markdown), [result.markdown]);
-
-  const strokeLabel = useMemo(() => {
-    const s = STROKES.find(x => x.key === config.stroke);
-    return s ? s.label : "Freestyle";
-  }, [config.stroke]);
 
   return (
     <div className="results fade-in">
@@ -112,84 +107,69 @@ function ResultsView({ result, frames, isVideo, config, mode, model, tokens, onN
             <div className="results__eyebrow">
               <span>Coaching Report</span>
               <span style={{ opacity: 0.5 }}>·</span>
-              <span>{strokeLabel}</span>
+              <span>Breaststroke</span>
               <span style={{ opacity: 0.5 }}>·</span>
               <span>{mode === "live" ? "Live · Claude" : "Demo Output"}</span>
             </div>
-            <h2 className="results__title">
-              Technique <em>read</em>
-            </h2>
+            <h2 className="results__title">Technique <em>read</em></h2>
           </div>
           <div className="results__meta">
             <strong>{new Date().toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</strong>
-            {model && model !== "demo" ? `${model}` : "Simulated output"}
+            {model && model !== "demo" ? model : "Simulated output"}
             {tokens ? ` · ${tokens.toLocaleString()} tokens` : ""}
           </div>
         </div>
 
-        <div className="result-body">
-          {sections.observe && (
-            <section className="result-section result-section--observe">
-              <div className="result-section__head">
-                <span className="result-section__num">§ 01</span>
-                <h3 className="result-section__title">What I <em>observe</em></h3>
-              </div>
-              <p className="result-prose result-prose--lede">{sections.observe}</p>
-            </section>
-          )}
-
+        <div className="report-grid">
           {sections.strengths.length > 0 && (
-            <section className="result-section result-section--strengths">
-              <div className="result-section__head">
-                <span className="result-section__num">§ 02</span>
-                <h3 className="result-section__title">Strengths</h3>
+            <div className="report-card report-card--strengths">
+              <div className="report-card__head">
+                <div className="report-card__icon report-card__icon--strengths">✓</div>
+                <h3 className="report-card__title">Strengths</h3>
               </div>
-              <ul className="result-list result-list--strengths">
-                {sections.strengths.map((s, i) => (<li key={i}><span></span>{s}</li>))}
+              <ul className="report-card__list">
+                {sections.strengths.map((s, i) => <li key={i}>{s}</li>)}
               </ul>
-            </section>
+            </div>
           )}
 
           {sections.improve.length > 0 && (
-            <section className="result-section result-section--improve">
-              <div className="result-section__head">
-                <span className="result-section__num">§ 03</span>
-                <h3 className="result-section__title">Areas for <em>improvement</em></h3>
+            <div className="report-card report-card--improve">
+              <div className="report-card__head">
+                <div className="report-card__icon report-card__icon--improve">!</div>
+                <h3 className="report-card__title">Fix These</h3>
               </div>
-              <ul className="result-list result-list--improve">
-                {sections.improve.map((s, i) => (<li key={i}><span></span>{s}</li>))}
+              <ul className="report-card__list">
+                {sections.improve.map((s, i) => <li key={i}>{s}</li>)}
               </ul>
-            </section>
+            </div>
           )}
 
           {sections.drills.length > 0 && (
-            <section className="result-section result-section--drills">
-              <div className="result-section__head">
-                <span className="result-section__num">§ 04</span>
-                <h3 className="result-section__title">Recommended <em>drills</em></h3>
+            <div className="report-card report-card--drills">
+              <div className="report-card__head">
+                <div className="report-card__icon report-card__icon--drills">#</div>
+                <h3 className="report-card__title">Drills</h3>
               </div>
-              <ol className="result-list result-list--drills">
-                {sections.drills.map((s, i) => (<li key={i}><span></span>{s}</li>))}
+              <ol className="report-card__list report-card__list--ordered">
+                {sections.drills.map((s, i) => <li key={i}>{s}</li>)}
               </ol>
-            </section>
-          )}
-
-          {sections.summary && (
-            <section className="result-section result-section--summary">
-              <div className="result-section__head">
-                <span className="result-section__num">§ 05</span>
-                <h3 className="result-section__title">Summary</h3>
-              </div>
-              <p className="result-summary">{sections.summary}</p>
-            </section>
+            </div>
           )}
         </div>
+
+        {sections.summary && (
+          <div className="coaching-note">
+            <span className="coaching-note__label">Coaching Note</span>
+            <p className="coaching-note__text">{sections.summary}</p>
+          </div>
+        )}
       </div>
 
       <aside className="rail">
         <div className="rail-card">
           <div className="rail-card__head">
-            <h3>{isVideo ? "Extracted Frames" : "Source Image"}</h3>
+            <h3>{isVideo ? "Analyzed Frames" : "Source Image"}</h3>
             <span>{frames.length}</span>
           </div>
           {frames.length > 0 ? (
@@ -207,21 +187,17 @@ function ResultsView({ result, frames, isVideo, config, mode, model, tokens, onN
           <div className="scoreboard">
             <div className="scoreboard__item">
               <div className="scoreboard__label">Stroke</div>
-              <div className="scoreboard__value" style={{ fontSize: 20 }}>{strokeLabel}</div>
+              <div className="scoreboard__value" style={{ fontSize: 18 }}>Breast</div>
             </div>
             <div className="scoreboard__item">
               <div className="scoreboard__label">Frames</div>
-              <div className="scoreboard__value">{frames.length}<small>/{frames.length}</small></div>
+              <div className="scoreboard__value">{frames.length}</div>
             </div>
             <div className="scoreboard__item">
               <div className="scoreboard__label">{mode === "live" ? "Tokens" : "Mode"}</div>
-              <div className="scoreboard__value" style={{ fontSize: 20 }}>
+              <div className="scoreboard__value" style={{ fontSize: 18 }}>
                 {mode === "live" ? (tokens || 0).toLocaleString() : "Demo"}
               </div>
-            </div>
-            <div className="scoreboard__item">
-              <div className="scoreboard__label">Focus</div>
-              <div className="scoreboard__value" style={{ fontSize: 20 }}>{(config.focus || []).length || "—"}</div>
             </div>
           </div>
         </div>
@@ -244,8 +220,8 @@ function ResultsView({ result, frames, isVideo, config, mode, model, tokens, onN
             <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--azure-deep)", marginBottom: 10 }}>
               Saved
             </div>
-            <p style={{ margin: 0, fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: 18, lineHeight: 1.4, color: "var(--ink)" }}>
-              This analysis was filed to your gallery automatically. Open the gallery to revisit, compare, and re-export.
+            <p style={{ margin: 0, fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: 16, lineHeight: 1.4, color: "var(--ink)" }}>
+              Filed to your gallery automatically. Revisit, compare, and export any time.
             </p>
           </div>
         </div>

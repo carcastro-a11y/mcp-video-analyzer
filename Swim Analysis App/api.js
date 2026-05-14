@@ -357,97 +357,64 @@
   }
 
   // ----------------------------------------------------------------
-  // Dynamic system prompt — camera-angle-aware + taxonomy-injected
+  // System prompt — breaststroke-only, camera angle auto-detected from footage
   // ----------------------------------------------------------------
   function buildSystemPrompt(stroke, cameraAngle, focus) {
-    const base = `You are an expert swimming coach with deep knowledge of competitive technique across freestyle, backstroke, breaststroke, and butterfly. You analyze swimming video frames and photos with the eye of an Olympic-level technical coach.\n` +
-      `Be precise about what you observe — reference body position, timing, and mechanics directly.\n` +
-      `Structure your feedback clearly with strengths, areas for improvement, and specific drills to fix issues.`;
+    // stroke/focus args kept for API compat but this app is breaststroke-only/full-coverage
+    const base =
+      `You are an expert breaststroke coach. ` +
+      `Analyze the provided frames and give concise, specific, actionable feedback. ` +
+      `Every sentence must teach something a swimmer can act on in their next session. ` +
+      `Only comment on what is physically visible — never speculate about mechanics you cannot see.`;
 
     let angleSection = "";
     if (cameraAngle === "overhead") {
-      angleSection = `\n\n## Camera angle: ELEVATED WIDE-ANGLE (overhead)\n\n` +
-        `At this distance swimmers occupy a small portion of the frame. Your analysis must be strictly limited to what is physically visible from this angle.\n\n` +
-        `**WHAT YOU CAN ASSESS:**\n` +
-        `- Body silhouette angle relative to the waterline (seesaw vs. flat body line)\n` +
-        `- Hip level: whether hips are at, above, or visibly below the waterline\n` +
-        `- Breath height: how far the swimmer's head/body rises above the surface during the breath\n` +
-        `- Phase timing: visible glide pauses between stroke cycles vs. constant churning motion\n` +
-        `- Wake pattern: tight narrow wake (forward-directed energy) vs. wide scattered wake (vertical bobbing)\n` +
-        `- Stroke rate: countable from splash rhythm\n\n` +
-        `**WHAT YOU CANNOT ASSESS — do NOT speculate about these:**\n` +
-        `- Elbow position, elbow angle, or wrist rotation\n` +
-        `- Hand pitch or catch depth\n` +
-        `- Precise head angle or chin position\n` +
-        `- Kick mechanics below the surface`;
+      angleSection = `\n\n## Camera: OVERHEAD\n` +
+        `Visible: body silhouette, hip level, breath height, phase timing, wake pattern, stroke rate.\n` +
+        `NOT visible — do not comment on: elbow angle, hand pitch, catch depth, kick mechanics below surface.`;
     } else if (cameraAngle === "deck_side") {
-      angleSection = `\n\n## Camera angle: POOL DECK LEVEL (side-on)\n\n` +
-        `**WHAT YOU CAN ASSESS:**\n` +
-        `- Head position during breath: height above water, neck extension, chin angle\n` +
-        `- Body line and undulation above the waterline\n` +
-        `- Hip position relative to the waterline\n` +
-        `- Arm recovery height and path above water\n` +
-        `- Breathing timing relative to the pull cycle\n` +
-        `- Body angle during the breath and seesaw effect\n\n` +
-        `**WHAT YOU CANNOT ASSESS without underwater footage:**\n` +
-        `- Hand pitch and catch depth\n` +
-        `- Underwater pull path\n` +
-        `- Kick mechanics below the surface`;
+      angleSection = `\n\n## Camera: DECK / SIDE\n` +
+        `Visible: head position, body line above waterline, hip level, arm recovery path, breathing timing, seesaw effect.\n` +
+        `NOT visible — do not comment on: catch depth, underwater pull path, kick mechanics below surface.`;
     } else if (cameraAngle === "underwater") {
-      angleSection = `\n\n## Camera angle: UNDERWATER\n\n` +
-        `**WHAT YOU CAN ASSESS:**\n` +
-        `- Catch mechanics: elbow position, hand pitch, forearm angle (early vertical forearm)\n` +
-        `- Pull path: direction and efficiency of force application\n` +
-        `- Kick mechanics: knee bend, foot position, kick depth and width\n` +
-        `- Hip position and body rotation\n` +
-        `- Streamline position during glide\n` +
-        `- Arm symmetry and bilateral timing\n\n` +
-        `**WHAT YOU CANNOT ASSESS reliably:**\n` +
-        `- Breathing timing (head position above water not visible)\n` +
-        `- Race-pace stroke rate without surface context`;
+      angleSection = `\n\n## Camera: UNDERWATER\n` +
+        `Visible: catch mechanics, elbow angle, pull path, kick mechanics, streamline position, body rotation.\n` +
+        `NOT visible — do not comment on: breathing timing, above-water head position.`;
+    } else {
+      angleSection = `\n\n## Camera angle\n` +
+        `First identify the camera angle from the footage (overhead, side-on, or underwater). ` +
+        `Then strictly limit your analysis to mechanics that are physically visible from that angle.`;
     }
 
-    const byAngle = getTaxonomyForStrokeAndAngle(stroke, cameraAngle);
-    const taxonomyEntries = getTaxonomyByFocusAreas(byAngle, focus);
+    const taxonomyEntries = SWIM_TAXONOMY.filter(e => e.stroke === "breaststroke");
     const taxonomySection = formatTaxonomyForPrompt(taxonomyEntries);
 
-    const outputFormat = `\n\nAnalyze the provided frames and return your feedback using EXACTLY this markdown structure:\n\n` +
-      `### What I Observe\n` +
-      `A detailed paragraph describing what you can see — body position, stroke phase, visible technique markers, water disturbance, head and hip alignment. Concrete and specific.\n\n` +
+    const outputFormat =
+      `\n\nReturn your analysis using EXACTLY this structure — no preamble, no extra sections:\n\n` +
       `### Strengths\n` +
-      `Bullet list (use "- " markdown) of 3-5 things the swimmer is doing well. Specific and technical.\n\n` +
-      `### Areas for Improvement\n` +
-      `Bullet list (use "- " markdown) of 3-5 things to work on. Each should be actionable, not vague.\n\n` +
-      `### Recommended Drills\n` +
-      `Numbered list (use "1. " markdown) of 3-5 specific drills with brief descriptions and what they correct.\n\n` +
-      `### Summary\n` +
-      `A short paragraph (2-3 sentences) of overall coaching takeaway. Encouraging but technical.\n\n` +
-      `Do not add other sections. Do not add preamble. Start directly with "### What I Observe".`;
+      `- [One sentence, specific and technical. 2–4 bullets.]\n\n` +
+      `### Fix These\n` +
+      `- [What you see + what to change, one sentence per bullet. 2–4 bullets.]\n\n` +
+      `### Drills\n` +
+      `1. [Drill Name] — [what it corrects and reps/distance. One sentence.]\n` +
+      `2. [2–4 drills total]\n\n` +
+      `### Coaching Note\n` +
+      `[One sentence. The single most important thing for this swimmer to work on next.]\n\n` +
+      `Start immediately with "### Strengths". No opening paragraph.`;
 
     return base + angleSection +
-      (taxonomySection ? `\n\n---\n\n## Known technique issues detectable from this angle\n\n${taxonomySection}` : "") +
+      (taxonomySection ? `\n\n---\n\n## Breaststroke technique reference\n\n${taxonomySection}` : "") +
       outputFormat;
   }
 
   function buildUserPrompt(opts) {
-    const focus = opts.focus && opts.focus.length ? opts.focus.join(", ") : "overall technique";
-    const stroke = opts.stroke === "auto" ? "(infer from the footage)" : opts.stroke;
-    const angleLabel = opts.cameraAngle === "overhead" ? "overhead / elevated wide-angle" :
-                       opts.cameraAngle === "underwater" ? "underwater" : "pool deck / side-on";
     const swimmerLine = opts.swimmer
-      ? `\nFocus exclusively on the swimmer matching this description: **${opts.swimmer}**. Track this swimmer across all frames using their visible identifiers (lane position, cap colour, suit colour, body size). Ignore all other swimmers in the frame.`
+      ? `\nFocus on: **${opts.swimmer}** — identify by lane, cap colour, suit colour across all frames.`
       : "";
-    const notesLine = opts.notes
-      ? `\n\nCoach notes: ${opts.notes}`
-      : "";
-    return `Analyze this swimming ${opts.type === "video" ? "video (frames extracted in chronological order)" : "photo"}.
-
-Stroke: ${stroke}
-Focus areas: ${focus}
-Detail level: ${opts.detail || "standard"}
-Camera angle: ${angleLabel}${swimmerLine}${notesLine}
-
-Give specific, technical, actionable feedback. Only comment on what is physically visible from the ${angleLabel} camera angle. Reference what you can actually see in the ${opts.type === "video" ? "frames" : "image"}.`;
+    const notesLine = opts.notes ? `\n\nCoach notes: ${opts.notes}` : "";
+    return `${opts.type === "video"
+      ? "Sequential frames from a breaststroke video."
+      : "A breaststroke photo."} Analyze technique.${swimmerLine}${notesLine}`;
   }
 
   // ----------------------------------------------------------------
@@ -658,21 +625,18 @@ Give specific, technical, actionable feedback. Only comment on what is physicall
     onStage && onStage("building");
     await sleep(opts.type === "video" ? 1200 : 700);
 
-    const data = pickMock(opts.stroke);
+    const data = pickMock("breaststroke");
     const md = [
-      "### What I Observe",
-      data.observe,
-      "",
       "### Strengths",
-      data.strengths.map(s => `- ${s}`).join("\n"),
+      data.strengths.slice(0, 3).map(s => `- ${s}`).join("\n"),
       "",
-      "### Areas for Improvement",
-      data.improve.map(s => `- ${s}`).join("\n"),
+      "### Fix These",
+      data.improve.slice(0, 3).map(s => `- ${s}`).join("\n"),
       "",
-      "### Recommended Drills",
-      data.drills.map((s, i) => `${i + 1}. ${s}`).join("\n"),
+      "### Drills",
+      data.drills.slice(0, 3).map((s, i) => `${i + 1}. ${s}`).join("\n"),
       "",
-      "### Summary",
+      "### Coaching Note",
       data.summary
     ].join("\n");
 
@@ -802,9 +766,9 @@ Give specific, technical, actionable feedback. Only comment on what is physicall
       const body = lines.slice(1).join("\n").trim();
       if (head.includes("observe")) sections.observe = body;
       else if (head.includes("strength")) sections.strengths = extractBullets(body);
-      else if (head.includes("improve") || head.includes("area")) sections.improve = extractBullets(body);
+      else if (head.includes("fix") || head.includes("improve") || head.includes("area")) sections.improve = extractBullets(body);
       else if (head.includes("drill")) sections.drills = extractBullets(body);
-      else if (head.includes("summary")) sections.summary = body;
+      else if (head.includes("note") || head.includes("summary") || head.includes("coaching")) sections.summary = body;
     }
     return sections;
   }
