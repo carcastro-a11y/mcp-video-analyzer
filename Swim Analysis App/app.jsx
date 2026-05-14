@@ -134,6 +134,14 @@ function App() {
         notes: config.notes || undefined
       };
       const out = await window.SwimAPI.analyze(opts, setStage);
+
+      // If the bridge ran the analysis it returns its own ffmpeg-extracted frames —
+      // use those instead of the browser canvas frames for the filmstrip.
+      if (out.frames && out.frames.length > 0) {
+        frames = out.frames;
+        setExtractedFrames(out.frames);
+      }
+
       setResult(out);
       setStage("done");
       setPhase("done");

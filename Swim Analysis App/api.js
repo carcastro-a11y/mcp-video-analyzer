@@ -483,7 +483,63 @@
   }
 
   // ----------------------------------------------------------------
-  // Live analysis (Claude API)
+  // Bridge detection — check once if the local bridge is running.
+  // If it is, all analysis is routed through it (ffmpeg + sharp pipeline)
+  // instead of the browser canvas fallback.
+  // ----------------------------------------------------------------
+  const BRIDGE_URL = "http://localhost:3001";
+  let bridgeAvailable = null; // null = unchecked, true/false after first check
+
+  async function checkBridge() {
+    if (bridgeAvailable !== null) return bridgeAvailable;
+    try {
+      const res = await fetch(`${BRIDGE_URL}/health`, {
+        signal: AbortSignal.timeout(600)
+      });
+      bridgeAvailable = res.ok;
+    } catch {
+      bridgeAvailable = false;
+    }
+    return bridgeAvailable;
+  }
+
+  async function bridgeAnalyze(opts, onStage) {
+    onStage && onStage("preparing");
+
+    const formData = new FormData();
+    formData.append("video", opts.file);
+    formData.append("stroke", opts.stroke || "breaststroke");
+    if (opts.swimmer) formData.append("swimmer", opts.swimmer);
+    if (opts.notes) formData.append("notes", opts.notes);
+
+    onStage && onStage("sending");
+
+    const res = await fetch(`${BRIDGE_URL}/analyze`, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      const err = new Error(`Bridge error ${res.status}`);
+      err.status = res.status;
+      err.body = text;
+      throw err;
+    }
+
+    onStage && onStage("building");
+    const data = await res.json();
+    return {
+      markdown: data.markdown,
+      tokens: data.tokens,
+      model: data.model,
+      mode: "live",
+      frames: data.frames   // bridge-extracted frames — ffmpeg-precise
+    };
+  }
+
+  // ----------------------------------------------------------------
+  // Live analysis (Claude API — browser canvas pipeline)
   // ----------------------------------------------------------------
   async function liveAnalyze(opts, onStage) {
     const key = getKey();
@@ -817,13 +873,20 @@
   }
 
   // ----------------------------------------------------------------
-  // Dispatcher
+  // Dispatcher — bridge first, then live, then mock
   // ----------------------------------------------------------------
   async function analyze(opts, onStage) {
-    const useLive = !!getKey();
-    if (useLive) {
-      return liveAnalyze(opts, onStage);
+    // Bridge: full ffmpeg + sharp pipeline, no API key needed in the browser
+    // (the bridge reads ANTHROPIC_API_KEY from its own .env)
+    if (opts.file && opts.type === "video") {
+      const hasBridge = await checkBridge();
+      if (hasBridge) return bridgeAnalyze(opts, onStage);
     }
+
+    // Direct browser pipeline: needs user's API key in settings
+    if (getKey()) return liveAnalyze(opts, onStage);
+
+    // Demo / mock mode
     return mockAnalyze(opts, onStage);
   }
 
