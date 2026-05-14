@@ -94,30 +94,32 @@ function AnalysisProgress({ stage, frames, framesTarget, error, onRetry, onCance
 }
 
 // ----------------------------------------------------------------
-// FrameFilmstrip — horizontal scrollable strip of all analyzed frames
-// Sits between the report cards and coaching note so users can
-// cross-reference frames while reading each bullet point.
+// AnalyzedFramesGrid — full-width photo grid shown below the analysis
 // ----------------------------------------------------------------
 function FrameFilmstrip({ frames, onOpenFrame }) {
   if (!frames || frames.length === 0) return null;
   return (
-    <div className="frame-filmstrip">
-      <div className="frame-filmstrip__head">
-        <span className="frame-filmstrip__label">Analyzed Frames</span>
-        <span className="frame-filmstrip__count">
-          {frames.length} frame{frames.length !== 1 ? "s" : ""} · click any to expand
-        </span>
+    <div className="analyzed-frames">
+      <div className="analyzed-frames__head">
+        <div>
+          <span className="analyzed-frames__label">Analyzed Frames</span>
+          <span className="analyzed-frames__sublabel">
+            Frames extracted and sent to Claude · click any to expand full size
+          </span>
+        </div>
+        <span className="analyzed-frames__count">{frames.length}</span>
       </div>
-      <div className="frame-filmstrip__scroll">
+      <div className="analyzed-frames__grid">
         {frames.map((f, i) => (
           <button
             key={i}
-            className="frame-filmstrip__thumb"
+            className="analyzed-frames__thumb"
             onClick={() => onOpenFrame(f.dataUrl)}
             title={`Frame ${i + 1} — ${f.timestamp}`}
           >
             <img src={f.dataUrl} alt={`Frame ${i + 1}`} />
-            <span className="frame-filmstrip__time">{f.timestamp}</span>
+            <span className="analyzed-frames__time">{f.timestamp}</span>
+            <span className="analyzed-frames__num">#{i + 1}</span>
           </button>
         ))}
       </div>
@@ -207,14 +209,14 @@ function ResultsView({ result, frames, isVideo, config, mode, model, tokens, onN
           )}
         </div>
 
-        <FrameFilmstrip frames={frames} onOpenFrame={onOpenFrame} />
-
         {sections.summary && (
           <div className="coaching-note">
             <span className="coaching-note__label">Coaching Note</span>
             <p className="coaching-note__text">{sections.summary}</p>
           </div>
         )}
+
+        <FrameFilmstrip frames={frames} onOpenFrame={onOpenFrame} />
       </div>
 
       <aside className="rail">
