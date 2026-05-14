@@ -106,6 +106,28 @@ const AnalyzeSwimStrokeSchema = z.object({
         'When provided, Claude will track and analyze only that swimmer across all frames, ' +
         'using other swimmers only for comparison.',
     ),
+  lane: z
+    .number()
+    .int()
+    .min(1)
+    .max(10)
+    .optional()
+    .describe(
+      'Lane number of the target swimmer (1 = leftmost lane as seen from above). ' +
+        'When provided with totalLanes, peak detection crops to that lane before computing motion hashes, ' +
+        'so peaks from other lanes do not influence which frames are selected. ' +
+        'Most effective for overhead footage where lanes divide the frame width evenly.',
+    ),
+  totalLanes: z
+    .number()
+    .int()
+    .min(2)
+    .max(10)
+    .optional()
+    .describe(
+      'Total number of lanes visible in the frame (required when lane is provided). ' +
+        'Used to compute proportional crop bounds: laneWidth = frameWidth / totalLanes.',
+    ),
 });
 
 function buildAngleSystemPrompt(cameraAngle: CameraAngle | undefined, swimmer?: string): string {
@@ -311,7 +333,11 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
 
       // ── Detect local motion peaks (stroke-phase transitions) ───────
       const topN = Math.max(2, Math.floor(frameCount / 3));
-      const peakIndices = await detectMotionPeaks(scanFrames, { topN, minMagnitude: 6 });
+      const laneSpec =
+        args.lane && args.totalLanes
+          ? { number: args.lane, total: args.totalLanes }
+          : undefined;
+      const peakIndices = await detectMotionPeaks(scanFrames, { topN, minMagnitude: 6, lane: laneSpec });
 
       // ── Phase 2: burst around each peak ───────────────────────────
       await progress(40, `Found ${peakIndices.length} key moments, extracting bursts...`);

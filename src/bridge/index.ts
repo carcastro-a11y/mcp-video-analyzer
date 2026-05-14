@@ -128,6 +128,9 @@ app.post('/analyze', upload.single('video'), async (req, res) => {
   const stroke = (req.body.stroke as string) || 'breaststroke';
   const swimmer = (req.body.swimmer as string) || undefined;
   const notes = (req.body.notes as string) || undefined;
+  const laneNum = req.body.lane ? parseInt(req.body.lane as string, 10) : undefined;
+  const totalLanes = req.body.totalLanes ? parseInt(req.body.totalLanes as string, 10) : undefined;
+  const laneSpec = laneNum && totalLanes ? { number: laneNum, total: totalLanes } : undefined;
   const frameCount = 12;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -150,7 +153,7 @@ app.post('/analyze', upload.single('video'), async (req, res) => {
 
     // ── Detect motion peaks ───────────────────────────────────────────
     const topN = Math.max(2, Math.floor(frameCount / 3));
-    const peakIndices = await detectMotionPeaks(scanFrames, { topN, minMagnitude: 6 });
+    const peakIndices = await detectMotionPeaks(scanFrames, { topN, minMagnitude: 6, lane: laneSpec });
     console.log(`[bridge] found ${peakIndices.length} peaks`);
 
     // ── Phase 2: burst around each peak ──────────────────────────────

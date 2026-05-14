@@ -4,6 +4,18 @@ import type { IFrameResult } from '../types.js';
 const HASH_WIDTH = 9;
 const HASH_HEIGHT = 8;
 
+interface FrameCrop {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+export interface LaneSpec {
+  number: number; // 1-indexed lane number
+  total: number;  // total lanes visible in the frame
+}
+
 /**
  * Check if a frame is effectively black/blank.
  * Computes the mean brightness of the image — if below threshold, it's black.
@@ -49,8 +61,10 @@ export async function filterBlackFrames(
  * Resize to 9x8 grayscale, then compare each pixel to its right neighbor.
  * Returns a Buffer of 9 bytes (72 bits), one bit per pixel comparison.
  */
-export async function computeDHash(imagePath: string): Promise<Buffer> {
-  const pixels = await sharp(imagePath)
+export async function computeDHash(imagePath: string, crop?: FrameCrop): Promise<Buffer> {
+  let pipeline = sharp(imagePath);
+  if (crop) pipeline = pipeline.extract(crop);
+  const pixels = await pipeline
     .greyscale()
     .resize(HASH_WIDTH, HASH_HEIGHT, { fit: 'fill' })
     .raw()
@@ -150,7 +164,12 @@ export async function deduplicateFrames(
  */
 export async function detectMotionPeaks(
   frames: IFrameResult[],
-  options?: { topN?: number; minMagnitude?: number; minSeparation?: number },
+  options?: {
+    topN?: number;
+    minMagnitude?: number;
+    minSeparation?: number;
+    lane?: LaneSpec;
+  },
 ): Promise<number[]> {
   const topN = options?.topN ?? 5;
   const minMagnitude = options?.minMagnitude ?? 15;
@@ -160,8 +179,25 @@ export async function detectMotionPeaks(
     return [];
   }
 
+  // Compute crop region from lane spec — proportional estimate from first frame's dimensions.
+  // Adds a 15% buffer on each side so swimmers near the lane rope aren't clipped.
+  // Most accurate for overhead shots where lanes divide the frame width evenly.
+  let crop: FrameCrop | undefined;
+  if (options?.lane && frames.length > 0) {
+    const meta = await sharp(frames[0].filePath).metadata().catch(() => null);
+    if (meta?.width && meta?.height) {
+      const { number: laneNum, total } = options.lane;
+      const laneW = Math.round(meta.width / total);
+      const laneLeft = Math.round(((laneNum - 1) / total) * meta.width);
+      const buf = Math.round(laneW * 0.15);
+      const left = Math.max(0, laneLeft - buf);
+      const right = Math.min(meta.width, laneLeft + laneW + buf);
+      crop = { left, top: 0, width: right - left, height: meta.height };
+    }
+  }
+
   const hashes = await Promise.all(
-    frames.map((f) => computeDHash(f.filePath).catch(() => null)),
+    frames.map((f) => computeDHash(f.filePath, crop).catch(() => null)),
   );
 
   // mag[i] = motion between frame i and frame i+1

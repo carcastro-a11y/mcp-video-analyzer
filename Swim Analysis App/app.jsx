@@ -41,7 +41,9 @@ function App() {
     focus: ["overall"],
     detail: "standard",
     swimmer: "",
-    notes: ""
+    notes: "",
+    lane: 0,
+    totalLanes: 8
   });
 
   // ---- Analysis state ----
@@ -131,7 +133,9 @@ function App() {
         focus: ["overall"],
         detail: "standard",
         swimmer: config.swimmer || undefined,
-        notes: config.notes || undefined
+        notes: config.notes || undefined,
+        lane: config.lane > 0 ? config.lane : undefined,
+        totalLanes: config.lane > 0 ? config.totalLanes : undefined
       };
       const out = await window.SwimAPI.analyze(opts, setStage);
 

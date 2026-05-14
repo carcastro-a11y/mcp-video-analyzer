@@ -228,6 +228,50 @@ function ConfigPanel({ type, config, setConfig, canAnalyze, onAnalyze, model, li
         </div>
       </div>
 
+      {type === "video" && (
+        <div className="config__row">
+          <div className="config__label">
+            <span className="config__label-tag">02 · Lane crop</span>
+            <span className="config__label-title">Peak detection <em>scope</em></span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <select
+                className="url-box__input"
+                style={{ maxWidth: 160 }}
+                value={config.lane || 0}
+                onChange={(e) => setKey("lane", Number(e.target.value))}
+              >
+                <option value={0}>All lanes</option>
+                {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                  <option key={n} value={n}>Lane {n}</option>
+                ))}
+              </select>
+              {config.lane > 0 && (
+                <React.Fragment>
+                  <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>of</span>
+                  <select
+                    className="url-box__input"
+                    style={{ maxWidth: 100 }}
+                    value={config.totalLanes || 8}
+                    onChange={(e) => setKey("totalLanes", Number(e.target.value))}
+                  >
+                    {[2,3,4,5,6,7,8,9,10].map(n => (
+                      <option key={n} value={n}>{n} lanes</option>
+                    ))}
+                  </select>
+                </React.Fragment>
+              )}
+            </div>
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--ink-faint)", lineHeight: 1.4 }}>
+              {config.lane > 0
+                ? "Peak detection will crop to this lane before hashing — peaks from other lanes won't trigger frame selection. Best for overhead footage. Bridge mode only."
+                : "Analyze the full frame. Use lane crop for overhead meet footage with multiple swimmers."}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="cta-row">
         <div className="cta-row__model">
           <div style={{ fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-faint)" }}>Model</div>
