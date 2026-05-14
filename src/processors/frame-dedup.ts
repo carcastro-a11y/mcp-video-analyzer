@@ -132,27 +132,32 @@ export async function deduplicateFrames(
 }
 
 /**
- * Find frames that are local motion peaks in a 1fps scan sequence.
+ * Find frames that are clear motion peaks in a 1fps scan sequence.
  *
  * Computes dHash Hamming distance between consecutive frames to build a motion
- * magnitude signal, then returns indices of local maxima above the threshold.
- * Use these indices to target burst extraction at exactly the moments where
- * stroke phase transitions occur.
+ * magnitude signal, then returns indices of strict local maxima above a meaningful
+ * threshold. Only flags moments with significant structural body-position changes —
+ * camera shake, water ripple, and gradual drift are filtered out.
  *
  * @param frames - Frames in chronological order (typically a 1fps scan)
  * @param options.topN - Maximum peaks to return (default: 5)
- * @param options.minMagnitude - Minimum Hamming distance to qualify as a peak (default: 6, range 0–64)
- * @returns Indices into `frames`, sorted chronologically
+ * @param options.minMagnitude - Minimum Hamming distance to qualify (default: 15, range 0–64).
+ *   15/64 ≈ 23% structural change — enough to distinguish technique transitions from noise.
+ * @param options.minSeparation - Minimum frames between accepted peaks (default: 2).
+ *   Prevents two peaks from the same stroke cycle both being selected.
+ * @returns Indices into `frames`, sorted chronologically. May be fewer than topN
+ *   if the video has fewer clearly distinct technique moments.
  */
 export async function detectMotionPeaks(
   frames: IFrameResult[],
-  options?: { topN?: number; minMagnitude?: number },
+  options?: { topN?: number; minMagnitude?: number; minSeparation?: number },
 ): Promise<number[]> {
   const topN = options?.topN ?? 5;
-  const minMagnitude = options?.minMagnitude ?? 6;
+  const minMagnitude = options?.minMagnitude ?? 15;
+  const minSeparation = options?.minSeparation ?? 2;
 
   if (frames.length < 2) {
-    return frames.length === 1 ? [0] : [];
+    return [];
   }
 
   const hashes = await Promise.all(
@@ -167,33 +172,31 @@ export async function detectMotionPeaks(
     mag[i] = a && b ? hammingDistance(a, b) : 0;
   }
 
-  // Find local maxima; assign burst center to frame i+1 (post-transition position)
-  const peaks: Array<{ index: number; magnitude: number }> = [];
+  // Strict local maxima only (>) — plateaus are not peaks.
+  // Assign burst center to frame i+1 (post-transition position is established there).
+  const candidates: Array<{ index: number; magnitude: number }> = [];
   for (let i = 0; i < mag.length; i++) {
     if (mag[i] < minMagnitude) continue;
-    const prevMag = i > 0 ? mag[i - 1] : -1;
-    const nextMag = i < mag.length - 1 ? mag[i + 1] : -1;
-    if (mag[i] >= prevMag && mag[i] >= nextMag) {
+    const prevMag = i > 0 ? mag[i - 1] : 0;
+    const nextMag = i < mag.length - 1 ? mag[i + 1] : 0;
+    if (mag[i] > prevMag && mag[i] > nextMag) {
       const frameIdx = Math.min(i + 1, frames.length - 1);
-      peaks.push({ index: frameIdx, magnitude: mag[i] });
+      candidates.push({ index: frameIdx, magnitude: mag[i] });
     }
   }
 
-  if (peaks.length === 0) return [];
+  if (candidates.length === 0) return [];
 
-  // Deduplicate peaks that map to the same frame index, keeping highest magnitude
-  const unique = new Map<number, number>();
-  for (const p of peaks) {
-    const existing = unique.get(p.index);
-    if (existing === undefined || p.magnitude > existing) {
-      unique.set(p.index, p.magnitude);
+  // Greedy NMS: take highest-magnitude peaks first, skip any within minSeparation frames.
+  candidates.sort((a, b) => b.magnitude - a.magnitude);
+  const selected: Array<{ index: number; magnitude: number }> = [];
+  for (const candidate of candidates) {
+    const tooClose = selected.some((s) => Math.abs(s.index - candidate.index) < minSeparation);
+    if (!tooClose) {
+      selected.push(candidate);
+      if (selected.length >= topN) break;
     }
   }
 
-  return [...unique.entries()]
-    .map(([index, magnitude]) => ({ index, magnitude }))
-    .sort((a, b) => b.magnitude - a.magnitude)
-    .slice(0, topN)
-    .sort((a, b) => a.index - b.index)
-    .map((p) => p.index);
+  return selected.sort((a, b) => a.index - b.index).map((p) => p.index);
 }

@@ -29,30 +29,42 @@
   // Motion peak detection — mirrors detectMotionPeaks in frame-dedup.ts
   // Takes the 8x8 grayscale pixel arrays from the scan phase.
   // ----------------------------------------------------------------
-  function detectWebMotionPeaks(scanPixels, topN, minMag) {
-    minMag = minMag == null ? 8 : minMag;
+  // minMag of 15/255 per pixel (mean absolute difference on 8x8 grayscale) filters camera
+  // shake and water ripple — only structural body-position changes qualify as peaks.
+  // minSep enforces at least 2 seconds between selected peaks to prevent the same
+  // stroke cycle contributing multiple bursts.
+  function detectWebMotionPeaks(scanPixels, topN, minMag, minSep) {
+    minMag = minMag == null ? 15 : minMag;
+    minSep = minSep == null ? 2 : minSep; // seconds (= frames at 1fps)
+
     const mags = [];
     for (let i = 0; i < scanPixels.length - 1; i++) {
       mags.push(pixelDistance(scanPixels[i], scanPixels[i + 1]));
     }
-    mags.push(0); // sentinel for last frame
+    mags.push(0);
 
-    const peaks = [];
+    // Strict local maxima only (>) — plateaus are not peaks
+    const candidates = [];
     for (let i = 0; i < mags.length; i++) {
       if (mags[i] < minMag) continue;
-      const prev = i > 0 ? mags[i - 1] : -1;
-      const next = i < mags.length - 1 ? mags[i + 1] : -1;
-      if (mags[i] >= prev && mags[i] >= next) {
-        // Burst centre is between frame i and i+1 (1fps → centre = i + 0.5 seconds)
-        peaks.push({ t: i + 0.5, mag: mags[i] });
+      const prev = i > 0 ? mags[i - 1] : 0;
+      const next = i < mags.length - 1 ? mags[i + 1] : 0;
+      if (mags[i] > prev && mags[i] > next) {
+        candidates.push({ t: i + 0.5, mag: mags[i] });
       }
     }
 
-    return peaks
-      .sort((a, b) => b.mag - a.mag)
-      .slice(0, topN)
-      .sort((a, b) => a.t - b.t)
-      .map(p => p.t);
+    // Greedy NMS: highest magnitude first, skip peaks within minSep of an accepted one
+    candidates.sort((a, b) => b.mag - a.mag);
+    const selected = [];
+    for (const c of candidates) {
+      if (selected.every(s => Math.abs(s.t - c.t) >= minSep)) {
+        selected.push(c);
+        if (selected.length >= topN) break;
+      }
+    }
+
+    return selected.sort((a, b) => a.t - b.t).map(p => p.t);
   }
 
   // ----------------------------------------------------------------
