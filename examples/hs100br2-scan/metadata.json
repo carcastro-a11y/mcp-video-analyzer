@@ -1,0 +1,61 @@
+{
+  "source": "High School Level 100Y Breaststroke (Heat 2)",
+  "clip_file": "high school level 100 br 2.mp4.mkv",
+  "clip_duration_seconds": 68,
+  "camera_angle": "deck_side",
+  "camera_notes": "Deck-level side view. Individual swimmer technique visible — body line, hip position, head angle, torso elevation, and elbow path are all assessable. Underwater mechanics (hand pitch, wrist rotation) not visible without underwater footage.",
+  "scan_fps": 1,
+  "total_scan_frames": 68,
+  "stroke": "breaststroke",
+  "competition_level": "high_school",
+  "flagged_timestamps": [
+    {
+      "clip_time": "0:08",
+      "taxonomy": ["breaststroke-sinking-hips-005", "breaststroke-breath-timing-006"],
+      "quality": "bad",
+      "lanes": [3],
+      "swimmer": "green cap",
+      "fault_summary": "Swimmer exits water too high — hips forced low, significant drag"
+    },
+    {
+      "clip_time": "0:09",
+      "taxonomy": ["breaststroke-breath-timing-006", "breaststroke-sinking-hips-005"],
+      "quality": "bad",
+      "lanes": [2],
+      "swimmer": "red cap",
+      "fault_summary": "Poor head position, chin not tucked; not rising high enough during breath"
+    },
+    {
+      "clip_time": "0:13",
+      "taxonomy": ["breaststroke-sinking-hips-005"],
+      "quality": "bad",
+      "lanes": [1],
+      "swimmer": "red cap",
+      "fault_summary": "Hips too low, chest cannot clear water sufficiently"
+    },
+    {
+      "clip_time": "0:24",
+      "taxonomy": ["breaststroke-catch-003"],
+      "quality": "bad",
+      "lanes": [2],
+      "swimmer": "red cap",
+      "fault_summary": "Elbows at chest level during catch instead of rib cage/lower EVF position"
+    },
+    {
+      "clip_time": "0:38",
+      "taxonomy": ["breaststroke-sinking-hips-005"],
+      "quality": "bad",
+      "lanes": [3],
+      "swimmer": "green cap",
+      "fault_summary": "Head looking straight ahead during glide — increased drag, disrupted body line"
+    },
+    {
+      "clip_time": "0:46",
+      "taxonomy": ["breaststroke-sinking-hips-005"],
+      "quality": "bad",
+      "lanes": [2],
+      "swimmer": "red cap",
+      "fault_summary": "Hips dropped very low — significant drag, horizontal body line lost"
+    }
+  ]
+}

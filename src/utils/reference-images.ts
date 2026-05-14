@@ -9,6 +9,7 @@ interface LabelEntry {
 }
 
 const MAX_FRAMES_PER_GROUP = 2;
+const MAX_TOTAL_REFERENCE_IMAGES = 10;
 const MAX_REF_IMAGE_WIDTH = 800;
 
 async function resizeImageToJpeg(filePath: string): Promise<Buffer> {
@@ -55,23 +56,33 @@ export async function buildReferenceBlocks(
   entries: TaxonomyEntry[],
 ): Promise<Anthropic.ContentBlockParam[]> {
   const blocks: Anthropic.ContentBlockParam[] = [];
+  let imageCount = 0;
 
   for (const entry of entries) {
+    if (imageCount >= MAX_TOTAL_REFERENCE_IMAGES) break;
     const hasBad = (entry.badExamples?.length ?? 0) > 0;
     const hasGood = (entry.goodExamples?.length ?? 0) > 0;
     if (!hasBad && !hasGood) continue;
 
     if (hasBad) {
+      const badBlocks = await buildExampleBlocks(entry.badExamples ?? []);
+      const imageBlockCount = badBlocks.filter((b) => b.type === 'image').length;
+      if (imageCount + imageBlockCount > MAX_TOTAL_REFERENCE_IMAGES) break;
       blocks.push({ type: 'text', text: `\n### ${entry.title} — BAD form (what to flag)\n` });
-      blocks.push(...(await buildExampleBlocks(entry.badExamples ?? [])));
+      blocks.push(...badBlocks);
+      imageCount += imageBlockCount;
     }
 
-    if (hasGood) {
+    if (hasGood && imageCount < MAX_TOTAL_REFERENCE_IMAGES) {
+      const goodBlocks = await buildExampleBlocks(entry.goodExamples ?? []);
+      const imageBlockCount = goodBlocks.filter((b) => b.type === 'image').length;
+      if (imageCount + imageBlockCount > MAX_TOTAL_REFERENCE_IMAGES) break;
       blocks.push({
         type: 'text',
         text: `\n### ${entry.title} — CORRECT form (what to aim for)\n`,
       });
-      blocks.push(...(await buildExampleBlocks(entry.goodExamples ?? [])));
+      blocks.push(...goodBlocks);
+      imageCount += imageBlockCount;
     }
   }
 

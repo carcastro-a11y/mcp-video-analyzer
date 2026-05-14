@@ -7,6 +7,7 @@ import { getAdapter } from '../adapters/adapter.interface.js';
 import type { CameraAngle } from '../data/swim-taxonomy.js';
 import {
   formatTaxonomyForPrompt,
+  getTaxonomyByFocusAreas,
   getTaxonomyByStroke,
   getTaxonomyByStrokeAndAngle,
 } from '../data/swim-taxonomy.js';
@@ -22,6 +23,17 @@ import type { IFrameResult } from '../types.js';
 import { createProgressReporter } from '../utils/progress.js';
 import { buildReferenceBlocks } from '../utils/reference-images.js';
 import { createTempDir } from '../utils/temp-files.js';
+
+// Approximate stroke cycles per second at race pace for each stroke.
+// Used to derive a frame count that naturally aligns with stroke phase boundaries
+// rather than landing randomly within a cycle.
+const STROKE_CYCLE_FPS: Record<string, number> = {
+  breaststroke: 1.2,
+  butterfly: 1.2,
+  backstroke: 1.5,
+  freestyle: 2.0,
+  unknown: 1.5,
+};
 
 const AnalyzeSwimStrokeSchema = z.object({
   url: z.string().url().describe('Video URL of the swim footage (.mp4, .webm, .mov)'),
@@ -78,9 +90,12 @@ const AnalyzeSwimStrokeSchema = z.object({
     .number()
     .min(3)
     .max(20)
-    .default(8)
+    .default(12)
     .optional()
-    .describe('Number of frames to extract for analysis (default: 8)'),
+    .describe(
+      'Maximum frames to extract for analysis (default: 12). ' +
+        'Actual count is capped at the stroke cycle rate × window duration so frames align with stroke phases.',
+    ),
   swimmer: z
     .string()
     .optional()
@@ -274,6 +289,8 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
 
       await progress(30, 'Extracting frames...');
 
+      const cycleFps = STROKE_CYCLE_FPS[stroke] ?? 1.5;
+
       let rawFrames;
       if (args.from && args.to) {
         const fromSeconds = parseTimestamp(args.from);
@@ -283,15 +300,18 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
             `"from" timestamp (${args.from}) must be before "to" timestamp (${args.to})`,
           );
         }
-        rawFrames = await extractFrameBurst(videoPath, tempDir, args.from, args.to, frameCount);
+        const windowDuration = toSeconds - fromSeconds;
+        const effectiveCount = Math.min(frameCount, Math.ceil(windowDuration * cycleFps));
+        rawFrames = await extractFrameBurst(videoPath, tempDir, args.from, args.to, effectiveCount);
       } else {
         const totalDuration = await probeVideoDuration(videoPath);
+        const effectiveCount = Math.min(frameCount, Math.ceil(totalDuration * cycleFps));
         rawFrames = await extractFrameBurst(
           videoPath,
           tempDir,
           '0:00',
           formatTimestamp(totalDuration),
-          frameCount,
+          effectiveCount,
         );
       }
 
@@ -311,7 +331,9 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
         filePath: optimizedPaths[i] ?? frame.filePath,
       }));
 
-      frames = await deduplicateFrames(frames).catch(() => frames);
+      // Tighter threshold (3 vs default 5): stroke-cycle sampling already spaces frames
+      // correctly, so near-identical frames are genuinely redundant glide/hold phases.
+      frames = await deduplicateFrames(frames, 3).catch(() => frames);
 
       await progress(65, `Sending ${frames.length} frames to Claude for analysis...`);
 
@@ -336,9 +358,10 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
           ? 'overall technique'
           : focus.map((f) => f.replace(/_/g, ' ')).join(', ');
 
-      const taxonomyEntries = cameraAngle
+      const byAngle = cameraAngle
         ? getTaxonomyByStrokeAndAngle(stroke, cameraAngle)
         : getTaxonomyByStroke(stroke);
+      const taxonomyEntries = getTaxonomyByFocusAreas(byAngle, focus);
       const taxonomySection = formatTaxonomyForPrompt(taxonomyEntries);
 
       const angleSystemPrompt = buildAngleSystemPrompt(cameraAngle, args.swimmer);
@@ -350,10 +373,7 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
 
       const userPrompt = buildUserPrompt(strokeLabel, focusLabel, cameraAngle, args.swimmer);
 
-      // Only send reference images for deck_side and underwater — the existing
-      // reference images are all close-up shots that would confuse overhead analysis.
-      const referenceBlocks =
-        cameraAngle === 'overhead' ? [] : await buildReferenceBlocks(taxonomyEntries);
+      const referenceBlocks = await buildReferenceBlocks(taxonomyEntries);
 
       const client = new Anthropic({ apiKey });
 
@@ -405,7 +425,14 @@ Requires a direct video URL (.mp4, .webm, .mov).`,
             type: 'text' as const,
             text: `\n\n---\n_Analyzed ${frames.length} frames using ${response.model}_`,
           },
-          { type: 'text' as const, text: JSON.stringify(metadata, null, 2) },
+          {
+            type: 'text' as const,
+            text:
+              `\n_Frames: ${metadata.framesAnalyzed} | Stroke: ${metadata.stroke} | Angle: ${metadata.cameraAngle}` +
+              (metadata.swimmer ? ` | Swimmer: ${metadata.swimmer}` : '') +
+              (metadata.range ? ` | Range: ${metadata.range.from}–${metadata.range.to}` : '') +
+              '_',
+          },
         ];
 
       for (const frame of frames) {

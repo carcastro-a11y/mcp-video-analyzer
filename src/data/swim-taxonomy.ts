@@ -1,7 +1,6 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const IMAGES_DIR = path.join(fileURLToPath(new URL('.', import.meta.url)), 'swim-reference-images');
 const EXAMPLES_DIR = path.join(
   fileURLToPath(new URL('.', import.meta.url)),
   '..',
@@ -9,12 +8,24 @@ const EXAMPLES_DIR = path.join(
   'examples',
 );
 
-const img = (...filenames: string[]) => filenames.map((f) => path.join(IMAGES_DIR, f));
 const example = (...parts: string[]) => path.join(EXAMPLES_DIR, ...parts);
 
 type Stroke = 'freestyle' | 'backstroke' | 'breaststroke' | 'butterfly';
 
 export type CameraAngle = 'overhead' | 'deck_side' | 'underwater';
+
+export type FocusArea =
+  | 'arm_entry'
+  | 'pull_phase'
+  | 'kick'
+  | 'body_rotation'
+  | 'head_position'
+  | 'breathing'
+  | 'timing'
+  | 'body_position'
+  | 'catch'
+  | 'hip_position'
+  | 'overall';
 
 export interface ExampleGroup {
   label: string;
@@ -32,7 +43,7 @@ export interface TaxonomyEntry {
   fix: string;
   drill: string;
   detectableFrom: CameraAngle[];
-  referenceImages?: string[];
+  focusAreas: FocusArea[];
   badExamples?: ExampleGroup[];
   goodExamples?: ExampleGroup[];
 }
@@ -50,7 +61,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     fix: 'Use the cue "Pull… breathe… kick… glide." The pause belongs in the glide, not in the breath.',
     drill:
       '2-kick-1-pull — do two kicks per arm cycle to force separation. Swim 4 x 25m with this pattern, 15 seconds rest between reps.',
-    referenceImages: img('Correct-breaststroke-kick.png', 'breaststroke-Pull-sequence-.png'),
+    focusAreas: ['timing', 'kick', 'breathing'],
   },
   {
     id: 'breaststroke-wide-pull-002',
@@ -64,7 +75,35 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     fix: "Keep elbows in front of your shoulders at all times. If you can't see them in your peripheral vision, you've pulled too far. Think of the pull as a heart shape, not a circle.",
     drill:
       'Forearm sculling – float face-down and scull with just forearms, keeping elbows nearly still. For competitive swimmers: work on early vertical forearm to catch more water with less arm extension.',
-    referenceImages: img('breaststroke-arm-pull.png'),
+    focusAreas: ['pull_phase', 'catch', 'arm_entry'],
+    badExamples: [
+      {
+        label: 'Arms past shoulder line — wide catch — NCAA overhead 2018',
+        description:
+          'Overhead broadcast: lane 1 hands and elbows extending past the shoulder line at the catch — arms too wide, reducing water hold and increasing frontal drag. Compare to lane 2 in the same frame for immediate contrast.',
+        frames: [
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_01.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_06.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_11.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+    ],
+    goodExamples: [
+      {
+        label: 'Elbows in front of shoulders — correct arm width — NCAA overhead 2018',
+        description:
+          'Overhead: lane 2 elbows staying in front of the shoulders through the full recovery and catch. Arm path contained inside the shoulder line — correct width for maximising water hold without creating a wide sweep.',
+        frames: [
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_03.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_08.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_13.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_18.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+    ],
   },
   {
     id: 'breaststroke-sinking-hips-005',
@@ -78,7 +117,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     fix: 'Keep the breathing motion small. During arm recovery, hands push forward at or just below the surface.',
     drill:
       'Streamline kick on front (SLOF) – hold streamline, kick breaststroke, time your breathing lift without taking a pull. A pool noodle tucked under the hips helps beginners feel the correct position for a few laps.',
-    referenceImages: img('Breaststroke-Body-Position-During-Breathing.png'),
+    focusAreas: ['hip_position', 'body_position', 'breathing'],
     badExamples: [
       {
         label: 'Sinking hips — seesaw effect',
@@ -90,6 +129,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('hip-position-bad', 'frame_04.png'),
           example('hip-position-bad', 'frame_05.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Excessive hip flexion — piking during pull',
@@ -103,6 +143,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('hip-position-bad', 'frame_07.png'),
           example('hip-position-bad', 'frame_08.png'),
         ],
+        cameraAngles: ['underwater'],
       },
       {
         label: 'Hips too high — heels breaking the surface',
@@ -114,6 +155,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('hip-position-bad', 'frame_10.png'),
           example('hip-position-bad', 'frame_11.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Hip–kick timing mismatch',
@@ -128,6 +170,67 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('hip-position-bad', 'frame_17.png'),
           example('hip-position-bad', 'frame_18.png'),
         ],
+        cameraAngles: ['deck_side'],
+      },
+      {
+        label: 'Excessive torso elevation driving hip drop — HS deck side',
+        description:
+          'Deck-level side view: swimmer exits the water too high during the breath, forcing hips into a very low underwater position. Classic seesaw at high-school level — excess head/torso rise redirects momentum downward rather than forward.',
+        frames: [
+          example('sinking-hips-bad-hs100br2-t008', 'frame_01.jpg'),
+          example('sinking-hips-bad-hs100br2-t008', 'frame_06.jpg'),
+          example('sinking-hips-bad-hs100br2-t008', 'frame_11.jpg'),
+          example('sinking-hips-bad-hs100br2-t008', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['deck_side'],
+      },
+      {
+        label: 'Hips too low — chest cannot clear water — HS deck side',
+        description:
+          'Side view: hips drop below the waterline during the breathing recovery, preventing the chest from clearing the water. Body angle too steep — increased frontal drag through the stroke cycle.',
+        frames: [
+          example('sinking-hips-bad-hs100br2-t013', 'frame_01.jpg'),
+          example('sinking-hips-bad-hs100br2-t013', 'frame_06.jpg'),
+          example('sinking-hips-bad-hs100br2-t013', 'frame_11.jpg'),
+          example('sinking-hips-bad-hs100br2-t013', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['deck_side'],
+      },
+      {
+        label: 'Forward gaze during glide — body line disruption — HS deck side',
+        description:
+          'Head looking straight ahead (eyes at horizon) instead of chin tucked down during the glide/streamline phase. Forward head position increases frontal drag and causes seesaw body-line disruption — the same mechanism as excessive breath lift, applied to the glide.',
+        frames: [
+          example('head-pos-bad-hs100br2-t038', 'frame_01.jpg'),
+          example('head-pos-bad-hs100br2-t038', 'frame_06.jpg'),
+          example('head-pos-bad-hs100br2-t038', 'frame_11.jpg'),
+          example('head-pos-bad-hs100br2-t038', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['deck_side'],
+      },
+      {
+        label: 'Severe hip drop — near-vertical body angle — HS deck side',
+        description:
+          'Most pronounced sinking-hip fault in this clip. Hips drop very low during kick recovery and glide — significant drag, horizontal body line completely lost. Body approaches near-vertical at the deepest point.',
+        frames: [
+          example('sinking-hips-bad-hs100br2-t046', 'frame_01.jpg'),
+          example('sinking-hips-bad-hs100br2-t046', 'frame_06.jpg'),
+          example('sinking-hips-bad-hs100br2-t046', 'frame_11.jpg'),
+          example('sinking-hips-bad-hs100br2-t046', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['deck_side'],
+      },
+      {
+        label: 'Early seesaw forming — hips beginning to drop — NCAA overhead 2018',
+        description:
+          'Overhead broadcast: lane 1 shows hips starting to drop below the surface — early-stage seesaw pattern. Compare directly to lane 3 in the same frame which maintains hip level (side-by-side contrast at race pace).',
+        frames: [
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_01.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_06.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_11.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['overhead'],
       },
     ],
     goodExamples: [
@@ -142,6 +245,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('hip-position-good', 'frame_10.png'),
           example('hip-position-good', 'frame_11.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Controlled undulation — compact hip wave',
@@ -154,6 +258,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('hip-position-good', 'frame_06.png'),
           example('hip-position-good', 'frame_07.png'),
         ],
+        cameraAngles: ['deck_side', 'overhead'],
       },
       {
         label: 'Hip-driven rotation — hip leads the arm',
@@ -164,6 +269,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('hip-position-good', 'frame_09.png'),
           example('hip-position-good', 'frame_13.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Tight glide phase — full body extension',
@@ -174,6 +280,88 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('hip-position-good', 'frame_04.png'),
           example('hip-position-good', 'frame_11.png'),
         ],
+        cameraAngles: ['deck_side'],
+      },
+      {
+        label: 'Hip-level body line — NCAA overhead broadcast',
+        description:
+          'Overhead broadcast showing hips sitting at the waterline during the breath cycle. Body maintains horizontal alignment with minimal seesaw — forward momentum preserved. Controlled breath with minimal head rise keeps hips from dropping.',
+        frames: [
+          example('sinking-hips-good-ncaa2025-t633', 'frame_01.jpg'),
+          example('sinking-hips-good-ncaa2025-t633', 'frame_05.jpg'),
+          example('sinking-hips-good-ncaa2025-t633', 'frame_10.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'Minimal head rise preserving hip position — NCAA overhead',
+        description:
+          'Overhead view: swimmer rises just enough to breathe then drives chin down as arms extend. Hips remain at the surface — no seesaw triggered by excessive head lift. Forward-directed wake confirms horizontal energy transfer.',
+        frames: [
+          example('breath-hips-good-ncaa2025-t558', 'frame_02.jpg'),
+          example('breath-hips-good-ncaa2025-t558', 'frame_06.jpg'),
+          example('breath-hips-good-ncaa2025-t558', 'frame_10.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'Multi-lane hip-level comparison — NCAA overhead',
+        description:
+          'Three NCAA swimmers simultaneously maintaining hip level through the breath from overhead. All show forward-directed wake and tight body line — useful pattern for recognising correct body position at race pace.',
+        frames: [
+          example('breath-hips-good-ncaa2025-t610', 'frame_02.jpg'),
+          example('breath-hips-good-ncaa2025-t610', 'frame_07.jpg'),
+          example('breath-hips-good-ncaa2025-t610', 'frame_12.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'Catch phase with hips level — NCAA overhead',
+        description:
+          'Overhead showing correct catch setup while hips remain at the waterline. Good horizontal body line maintained as the pull initiates — no premature hip drop triggered by the arm action.',
+        frames: [
+          example('catch-good-ncaa2025-t559', 'frame_02.jpg'),
+          example('catch-good-ncaa2025-t559', 'frame_07.jpg'),
+          example('catch-hips-good-ncaa2025-t621', 'frame_03.jpg'),
+          example('catch-hips-good-ncaa2025-t621', 'frame_09.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'Controlled downward drive after breath — hips at waterline — NCAA overhead 2018',
+        description:
+          'Overhead broadcast: lane 3 shows controlled downward momentum after the breath — hips stay at the waterline while the body transitions back to the glide. Forward energy maintained, no seesaw. Side-by-side with lane 1 which shows early hip drop for contrast.',
+        frames: [
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_02.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_07.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_12.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_17.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'Horizontal body, hips at waterline through breath — NCAA overhead 2018',
+        description:
+          'Overhead at 0:11 — body staying fully horizontal with hips at the waterline and head not rising excessively during the breath. Clean demonstration of correct body-position control at NCAA race pace.',
+        frames: [
+          example('sinking-hips-good-ncaa2018-t011', 'frame_01.jpg'),
+          example('sinking-hips-good-ncaa2018-t011', 'frame_06.jpg'),
+          example('sinking-hips-good-ncaa2018-t011', 'frame_11.jpg'),
+          example('sinking-hips-good-ncaa2018-t011', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'Multi-lane minimal chin rise — hips held — NCAA overhead 2018',
+        description:
+          'Two lanes simultaneously showing minimal chin rise during the breath, keeping hips from dropping. Useful multi-lane pattern: forward-directed wake in both lanes confirms no energy redirected downward.',
+        frames: [
+          example('sinking-hips-good-ncaa2018-t022', 'frame_01.jpg'),
+          example('sinking-hips-good-ncaa2018-t022', 'frame_06.jpg'),
+          example('sinking-hips-good-ncaa2018-t022', 'frame_11.jpg'),
+          example('sinking-hips-good-ncaa2018-t022', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['overhead'],
       },
     ],
   },
@@ -189,6 +377,82 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     fix: 'Exhale steadily into the water during the glide. Start the inhale as soon as the outsweep begins and your shoulders rise naturally. By the time your hands sweep inward, the breath should be done. Cue: "Breathe WITH the pull, not AFTER the pull."',
     drill:
       'Practice standing in shallow water doing the arm motion and timing the breath without the pressure of actually swimming.',
+    focusAreas: ['breathing', 'timing', 'body_position'],
+    badExamples: [
+      {
+        label: 'Late breath — excessive rise triggering seesaw — HS deck side',
+        description:
+          'Swimmer rises too high out of the water during the breath — momentum redirected downward rather than forward. Excessive head lift indicates the breath is initiated too late (after the pull rather than with it). Seesaw hip drop follows immediately.',
+        frames: [
+          example('sinking-hips-bad-hs100br2-t008', 'frame_03.jpg'),
+          example('sinking-hips-bad-hs100br2-t008', 'frame_08.jpg'),
+          example('sinking-hips-bad-hs100br2-t008', 'frame_13.jpg'),
+          example('sinking-hips-bad-hs100br2-t008', 'frame_18.jpg'),
+        ],
+        cameraAngles: ['deck_side'],
+      },
+      {
+        label: 'Chin up, insufficient rise — mistimed breath — HS deck side',
+        description:
+          'Chin not tucked combined with insufficient torso rise — swimmer failed to clear the airway. Indicates breath timing is off: either starting too late or the pull did not generate enough lift. Poor head position compounds the fault.',
+        frames: [
+          example('head-pos-bad-hs100br2-t009', 'frame_03.jpg'),
+          example('head-pos-bad-hs100br2-t009', 'frame_08.jpg'),
+          example('head-pos-bad-hs100br2-t009', 'frame_13.jpg'),
+          example('head-pos-bad-hs100br2-t009', 'frame_18.jpg'),
+        ],
+        cameraAngles: ['deck_side'],
+      },
+      {
+        label: 'Hips dropping into seesaw — breath timing fault — NCAA overhead 2018',
+        description:
+          'Overhead: lane 1 hips beginning to drop below the surface — early-stage seesaw caused by late or excessive breath. The hip drop here is the downstream consequence of the breath not being synchronised with the pull.',
+        frames: [
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_03.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_08.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_13.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_18.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+    ],
+    goodExamples: [
+      {
+        label: 'Breath WITH the pull — chin tucked, hips level',
+        description:
+          'Overhead broadcast showing breath timed to coincide with the arm pull phase. Swimmer rises just enough to clear the airway then drives chin down as arms extend — forward momentum preserved, no seesaw hip drop triggered.',
+        frames: [
+          example('breath-hips-good-ncaa2025-t558', 'frame_01.jpg'),
+          example('breath-hips-good-ncaa2025-t558', 'frame_04.jpg'),
+          example('breath-hips-good-ncaa2025-t558', 'frame_08.jpg'),
+          example('breath-hips-good-ncaa2025-t558', 'frame_12.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'Multi-lane correct breath timing — NCAA overhead',
+        description:
+          'Three NCAA swimmers simultaneously showing correct breath timing. All breathe early in the pull cycle, chin returns down well before the kick fires. Consistent forward-directed wake pattern confirms no energy redirected downward.',
+        frames: [
+          example('breath-hips-good-ncaa2025-t610', 'frame_01.jpg'),
+          example('breath-hips-good-ncaa2025-t610', 'frame_05.jpg'),
+          example('breath-hips-good-ncaa2025-t610', 'frame_10.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'Controlled downward drive, hips level post-breath — NCAA overhead 2018',
+        description:
+          'Overhead 2018: lane 3 transitions from the breath back to the glide with a controlled downward drive — hips stay at the waterline throughout. Breath is clearly synchronised with the pull: the body rises and returns as one unit.',
+        frames: [
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_04.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_09.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_14.jpg'),
+          example('sinking-hips-mixed-ncaa2018-t009', 'frame_19.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+    ],
   },
   {
     id: 'breaststroke-catch-003',
@@ -202,6 +466,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     fix: 'Initiate the catch with the elbow high and outside. The forearm should be near-vertical before the pull begins. Think "elbows up, hands down" at the start of every pull.',
     drill:
       'Catch-up drill with fists closed — swim breaststroke with fists to force forearm engagement. Then open hands and try to recreate the same forearm pressure. 4 x 25m, 20 seconds rest.',
+    focusAreas: ['catch', 'pull_phase', 'arm_entry'],
     badExamples: [
       {
         label: 'Dropped elbow — no EVF established',
@@ -215,71 +480,107 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('catch-bad', 'frame_09.png'),
           example('catch-bad', 'frame_12.png'),
         ],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Crossover entry — arm crossing centerline',
         description:
           'Hand enters across the body centerline causing hip snaking and a misdirected pull path.',
         frames: [example('catch-bad', 'frame_02.png'), example('catch-bad', 'frame_08.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Flat wrist — no downward hand pitch at entry',
         description: 'Hand enters flat rather than fingertips-down, delaying catch initiation.',
         frames: [example('catch-bad', 'frame_01.png'), example('catch-bad', 'frame_06.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Late catch initiation — straight arm pull',
         description:
           'Arm nearly fully extended with no elbow bend at what should be the catch moment. Swimmer relies on straight-arm pull instead of EVF.',
         frames: [example('catch-bad', 'frame_04.png'), example('catch-bad', 'frame_10.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Bilateral elbow dropout',
         description:
           'Both arms lose high elbow position simultaneously — no vertical forearm on either side.',
         frames: [example('catch-bad', 'frame_05.png'), example('catch-bad', 'frame_12.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Palm facing down not back',
         description:
           'Hand oriented toward pool floor rather than back wall, producing lift/brake force instead of propulsion.',
         frames: [example('catch-bad', 'frame_02.png'), example('catch-bad', 'frame_10.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Dead spot glide — lead arm paused flat',
         description:
           'Lead arm pauses flat on the surface instead of transitioning to catch, creating a deceleration dead spot.',
         frames: [example('catch-bad', 'frame_07.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Shoulder over-rotation',
         description:
           'Body rolled past 45° moving shoulder out of strong catch position and reducing mechanical advantage.',
         frames: [example('catch-bad', 'frame_08.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Shallow elbow sweep — arms too wide before catch',
         description:
           'Arms sweep laterally past shoulder-width before any vertical forearm position is established. Slipping water rather than catching it.',
         frames: [example('catch-bad', 'frame_03.png'), example('catch-bad', 'frame_05.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Elbow collapse mid-pull',
         description:
           'Elbow drops during the pull phase. All propulsion shifts to shoulder/upper arm rather than the larger forearm paddle surface.',
         frames: [example('catch-bad', 'frame_11.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Head lift disrupting catch',
         description:
           'Elevated head shifts weight backward so catching arm works uphill. Also prevents shoulder from dropping into the catch plane.',
         frames: [example('catch-bad', 'frame_06.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Over-reach depth',
         description:
           'Hand goes past natural catch depth, forcing swimmer to push water down before pushing it back.',
         frames: [example('catch-bad', 'frame_09.png')],
+        cameraAngles: ['deck_side', 'underwater'],
+      },
+      {
+        label: 'Elbows at chest level — catch initiated too high — HS deck side',
+        description:
+          'Deck-level side view: elbows remain at chest height during the catch instead of dropping to rib cage or lower where EVF can be established. Pull initiates too high — arms push water down rather than back, losing propulsive force.',
+        frames: [
+          example('catch-bad-hs100br2-t024', 'frame_01.jpg'),
+          example('catch-bad-hs100br2-t024', 'frame_06.jpg'),
+          example('catch-bad-hs100br2-t024', 'frame_11.jpg'),
+          example('catch-bad-hs100br2-t024', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['deck_side'],
+      },
+      {
+        label: 'Catch too wide — hands and elbows past shoulder line — NCAA overhead 2018',
+        description:
+          'Overhead broadcast: lane 1 arms extending past the shoulder line at the catch, reducing water hold. Compare to lane 2 in the same frame which keeps elbows inside the shoulders — side-by-side contrast of correct vs. wide catch at race pace.',
+        frames: [
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_01.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_06.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_11.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['overhead'],
       },
     ],
     goodExamples: [
@@ -293,18 +594,21 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('catch-good', 'frame_07.png'),
           example('catch-good', 'frame_08.png'),
         ],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Correct entry angle — fingertips first',
         description:
           'Wrist cocked with fingers leading into water at a downward angle. No flat slap, no air bubbles trapped under palm.',
         frames: [example('catch-good', 'frame_05.png'), example('catch-good', 'frame_12.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Palm facing backward',
         description:
           'Hand pitched toward back wall not pool floor. Propulsive force directed horizontally.',
         frames: [example('catch-good', 'frame_02.png'), example('catch-good', 'frame_10.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Bilateral EVF — both arms simultaneously',
@@ -315,52 +619,97 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('catch-good', 'frame_04.png'),
           example('catch-good', 'frame_09.png'),
         ],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'No elbow collapse mid-pull',
         description:
           'High elbow maintained through the pull phase past the most common failure point.',
         frames: [example('catch-good', 'frame_07.png'), example('catch-good', 'frame_11.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Body rotation synced to catch',
         description: 'Torso roll timed to load the catch, adding rotation power to the arm pull.',
         frames: [example('catch-good', 'frame_06.png'), example('catch-good', 'frame_10.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Entry outside shoulder line',
         description:
           'Hand enters at or outside shoulder — no crossover. Sets up a straight pull path.',
         frames: [example('catch-good', 'frame_03.png'), example('catch-good', 'frame_05.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Full pull length achieved',
         description:
           'Arm travels from full extension to past the hip. Only possible when catch was set correctly at the start.',
         frames: [example('catch-good', 'frame_13.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Forearm as paddle surface',
         description:
           'Full inner forearm from wrist to elbow pressing water backward during the pull.',
         frames: [example('catch-good', 'frame_11.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Neutral head position at catch',
         description: 'Head down allowing horizontal body position so catch works on a level plane.',
         frames: [example('catch-good', 'frame_04.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Clean entry — no air bubbles',
         description:
           'No aeration under the palm at entry. Clean entry means the hand has solid water to catch against immediately.',
         frames: [example('catch-good', 'frame_12.png')],
+        cameraAngles: ['deck_side', 'underwater'],
       },
       {
         label: 'Symmetric bilateral timing',
         description:
           'Both arms at matching depth and angle viewed frontally. Hallmark of a well-timed breaststroke catch.',
         frames: [example('catch-good', 'frame_09.png')],
+        cameraAngles: ['deck_side', 'underwater'],
+      },
+      {
+        label: 'Elbows inside shoulder line — clean arm recovery — NCAA overhead 2018',
+        description:
+          'Overhead: lane 2 elbows staying in front of the shoulders through the full catch cycle — correct arm width and path. Compare directly to lane 1 in the same frame which sweeps too wide.',
+        frames: [
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_03.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_08.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_13.jpg'),
+          example('catch-wide-mixed-ncaa2018-t007', 'frame_18.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'EVF before pull — lane 4 — NCAA overhead 2018',
+        description:
+          'Overhead at 0:18: lane 4 with early vertical forearm fully established before the pull begins. Clean symmetric setup, arm width inside the shoulder line. Clear example of correct catch initiation at race pace.',
+        frames: [
+          example('catch-good-ncaa2018-t018', 'frame_01.jpg'),
+          example('catch-good-ncaa2018-t018', 'frame_06.jpg'),
+          example('catch-good-ncaa2018-t018', 'frame_11.jpg'),
+          example('catch-good-ncaa2018-t018', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['overhead'],
+      },
+      {
+        label: 'Multi-lane bilateral EVF — NCAA overhead 2018',
+        description:
+          'Two NCAA lanes simultaneously showing EVF with elbows high before the pull initiates. Multi-lane overhead comparison of elite catch mechanics — both lanes show correct arm width and symmetric setup.',
+        frames: [
+          example('catch-good-ncaa2018-t033', 'frame_01.jpg'),
+          example('catch-good-ncaa2018-t033', 'frame_06.jpg'),
+          example('catch-good-ncaa2018-t033', 'frame_11.jpg'),
+          example('catch-good-ncaa2018-t033', 'frame_16.jpg'),
+        ],
+        cameraAngles: ['overhead'],
       },
     ],
   },
@@ -376,6 +725,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
     fix: 'Look at the pool floor, not the wall ahead. One goggle should stay submerged on the breath. Use the bow wave trough to breathe — it creates a natural air pocket without any head lift.',
     drill:
       'Catch-up drill with a focus on keeping the crown of the head as the highest point at all times. 4 x 50m, breathing every 3 strokes, 20 seconds rest. Use a tempo trainer to keep stroke rate steady.',
+    focusAreas: ['head_position', 'body_position', 'breathing'],
     badExamples: [
       {
         label: 'Head fully out of water — extreme lift',
@@ -388,6 +738,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-bad', 'frame_05.png'),
           example('head-position-bad', 'frame_06.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Forward gaze — eyes at horizon',
@@ -402,6 +753,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-bad', 'frame_11.png'),
           example('head-position-bad', 'frame_12.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Neck hyperextension',
@@ -412,6 +764,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-bad', 'frame_06.png'),
           example('head-position-bad', 'frame_10.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Hip sink from head lift',
@@ -423,6 +776,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-bad', 'frame_11.png'),
           example('head-position-bad', 'frame_12.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Vertical body position from head lift',
@@ -434,6 +788,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-bad', 'frame_05.png'),
           example('head-position-bad', 'frame_06.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Shoulder elevation from head',
@@ -444,18 +799,21 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-bad', 'frame_07.png'),
           example('head-position-bad', 'frame_08.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Over-rotation on breath',
         description:
           'Head rotating beyond 90 degrees AND lifting simultaneously on the breath. One goggle should stay submerged.',
         frames: [example('head-position-bad', 'frame_08.png')],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Head lift with chin compression',
         description:
           'Head raised but chin tucked creating a neck crunch. Incorrect compensation by swimmers who know not to look forward.',
         frames: [example('head-position-bad', 'frame_09.png')],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Lumbar arch from head lift',
@@ -465,6 +823,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-bad', 'frame_11.png'),
           example('head-position-bad', 'frame_12.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Elbow drop linked to head position',
@@ -482,6 +841,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-bad', 'frame_05.png'),
           example('head-position-bad', 'frame_06.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Persistent head lift pattern',
@@ -494,6 +854,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-bad', 'frame_11.png'),
           example('head-position-bad', 'frame_12.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
     ],
     goodExamples: [
@@ -507,6 +868,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_07.png'),
           example('head-position-good', 'frame_12.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Minimal breath lift — chin at waterline',
@@ -519,6 +881,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_11.png'),
           example('head-position-good', 'frame_13.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Body-driven head rise',
@@ -530,6 +893,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_10.png'),
           example('head-position-good', 'frame_11.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Neutral cervical spine',
@@ -541,6 +905,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_09.png'),
           example('head-position-good', 'frame_11.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Head centered bilaterally',
@@ -551,6 +916,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_08.png'),
           example('head-position-good', 'frame_13.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Chin drops before arm extension',
@@ -561,6 +927,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_09.png'),
           example('head-position-good', 'frame_12.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Crown as leading point',
@@ -571,6 +938,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_07.png'),
           example('head-position-good', 'frame_12.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Flat body line confirmed by head',
@@ -581,6 +949,7 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_05.png'),
           example('head-position-good', 'frame_07.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Relaxed shoulders from head position',
@@ -591,12 +960,14 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_08.png'),
           example('head-position-good', 'frame_13.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Correct breath timing',
         description:
           'Breath taken at biomechanically correct moment — during the insweep/pull when body naturally rises.',
         frames: [example('head-position-good', 'frame_11.png')],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Downward forward gaze',
@@ -606,12 +977,14 @@ const SWIM_TAXONOMY: TaxonomyEntry[] = [
           example('head-position-good', 'frame_03.png'),
           example('head-position-good', 'frame_09.png'),
         ],
+        cameraAngles: ['deck_side'],
       },
       {
         label: 'Head tucked in streamline',
         description:
           'Head between extended arms rather than above arm line. Passive and relaxed — correct for the glide phase.',
         frames: [example('head-position-good', 'frame_07.png')],
+        cameraAngles: ['deck_side'],
       },
     ],
   },
@@ -640,9 +1013,20 @@ export function getTaxonomyByStrokeAndAngle(
     }));
 }
 
+export function getTaxonomyByFocusAreas(
+  entries: TaxonomyEntry[],
+  focusAreas: string[],
+): TaxonomyEntry[] {
+  if (focusAreas.length === 0 || focusAreas.includes('overall')) return entries;
+  return entries.filter((entry) => entry.focusAreas.some((f) => focusAreas.includes(f)));
+}
+
 export function formatTaxonomyForPrompt(entries: TaxonomyEntry[]): string {
   if (entries.length === 0) return '';
-  return entries
+  const hasExamples = (e: TaxonomyEntry) =>
+    (e.badExamples?.length ?? 0) > 0 || (e.goodExamples?.length ?? 0) > 0;
+  const sorted = [...entries].sort((a, b) => Number(hasExamples(b)) - Number(hasExamples(a)));
+  return sorted
     .map(
       (entry) =>
         `**${entry.title}**\n` +

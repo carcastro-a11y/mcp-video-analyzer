@@ -1,0 +1,20 @@
+{
+  "source": "100 Breaststroke — NCAA Division I Championships 2018",
+  "youtube_url": "https://www.youtube.com/watch?v=j3FmBTjbL1U",
+  "clip_file": "NCAA_100br_2018.mp4.webm",
+  "clip_timestamp": "0:33",
+  "full_video_timestamp": "0:51",
+  "taxonomy_ids": ["breaststroke-catch-003"],
+  "quality": "good",
+  "lanes": [2, 4],
+  "competition_level": "ncaa",
+  "coach_notes": "Both swimmers demonstrate a strong catch — early vertical forearm with elbows high before initiating the pull. Symmetric bilateral arm setup visible from overhead. Multi-lane comparison showing consistent elite-level catch mechanics.",
+  "affected_phases": ["catch", "pull_phase"],
+  "body_segments": ["elbow_position", "arm_path", "catch_mechanics"],
+  "camera_angle": "wide_overhead_broadcast",
+  "usable_for": ["arm_width_relative_to_shoulders", "catch_symmetry", "stroke_phase_timing", "multi_lane_comparison"],
+  "not_usable_for": ["elbow_angle_precise", "wrist_rotation", "hand_pitch", "catch_depth"],
+  "burst_fps": 5,
+  "burst_window": "0:31-0:35",
+  "frame_count": 20
+}

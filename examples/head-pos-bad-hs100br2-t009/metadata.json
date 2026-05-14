@@ -1,0 +1,19 @@
+{
+  "source": "High School Level 100Y Breaststroke (Heat 2)",
+  "clip_file": "high school level 100 br 2.mp4.mkv",
+  "clip_timestamp": "0:09",
+  "taxonomy_ids": ["breaststroke-breath-timing-006", "breaststroke-sinking-hips-005"],
+  "quality": "bad",
+  "lanes": [2],
+  "swimmer": "red cap",
+  "competition_level": "high_school",
+  "coach_notes": "Poor head position — chin not tucked toward the chest. Swimmer also does not rise high enough out of the water, suggesting the breath is being taken too late (after the pull rather than with it). Head/neck misalignment increases frontal drag through the breathing phase.",
+  "affected_phases": ["breathing_phase"],
+  "body_segments": ["head_neck_alignment", "torso_elevation"],
+  "camera_angle": "deck_side",
+  "usable_for": ["head_neck_alignment", "torso_elevation", "breath_timing_phase", "chin_tuck"],
+  "not_usable_for": ["hand_pitch", "underwater_pull_path"],
+  "burst_fps": 5,
+  "burst_window": "0:07-0:11",
+  "frame_count": 20
+}

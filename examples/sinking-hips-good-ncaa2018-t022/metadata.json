@@ -1,0 +1,20 @@
+{
+  "source": "100 Breaststroke — NCAA Division I Championships 2018",
+  "youtube_url": "https://www.youtube.com/watch?v=j3FmBTjbL1U",
+  "clip_file": "NCAA_100br_2018.mp4.webm",
+  "clip_timestamp": "0:22",
+  "full_video_timestamp": "0:40",
+  "taxonomy_ids": ["breaststroke-sinking-hips-005"],
+  "quality": "good",
+  "lanes": [1, 4],
+  "competition_level": "ncaa",
+  "coach_notes": "Both swimmers showing good head position during the breath — minimal chin rise keeps hips from dropping into the seesaw pattern. Forward momentum maintained through the breath cycle in both lanes.",
+  "affected_phases": ["breathing_phase", "stroke_cycle"],
+  "body_segments": ["hip_position", "head_neck_alignment", "body_line"],
+  "camera_angle": "wide_overhead_broadcast",
+  "usable_for": ["hip_level_relative", "body_line", "breath_height", "multi_lane_comparison"],
+  "not_usable_for": ["chin_tuck_precise", "head_angle_precise", "wrist_rotation"],
+  "burst_fps": 5,
+  "burst_window": "0:20-0:24",
+  "frame_count": 20
+}

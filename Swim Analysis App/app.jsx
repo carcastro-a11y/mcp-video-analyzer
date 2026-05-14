@@ -39,9 +39,10 @@ function App() {
     stroke: "freestyle",
     focus: ["arm_entry", "body_rotation", "head_position"],
     detail: "standard",
-    frames: 8,
+    frames: 12,
     cameraAngle: "deck_side",
-    swimmer: ""
+    swimmer: "",
+    notes: ""
   });
 
   // ---- Analysis state ----
@@ -83,7 +84,7 @@ function App() {
           // Real extraction from uploaded file
           frames = await window.SwimAPI.extractFrames(file, config.frames, (i, total, f) => {
             setExtractedFrames((prev) => [...prev, f]);
-          });
+          }, config.stroke);
         } else {
           // URL provided — generate mock frames since cross-origin video is unreliable
           for (let i = 0; i < config.frames; i++) {
@@ -127,7 +128,8 @@ function App() {
         focus: config.focus,
         detail: config.detail,
         cameraAngle: config.cameraAngle,
-        swimmer: config.swimmer || undefined
+        swimmer: config.swimmer || undefined,
+        notes: config.notes || undefined
       };
       const out = await window.SwimAPI.analyze(opts, setStage);
       setResult(out);
@@ -276,7 +278,9 @@ function App() {
             type={type}
             setType={setType}
             mediaPreviewUrl={mediaPreviewUrl}
-            setMediaPreviewUrl={setMediaPreviewUrl} />
+            setMediaPreviewUrl={setMediaPreviewUrl}
+            notes={config.notes}
+            onNotesChange={(v) => setConfig({ ...config, notes: v })} />
           
 
             {hasInput &&

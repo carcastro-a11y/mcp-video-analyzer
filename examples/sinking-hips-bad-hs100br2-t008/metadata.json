@@ -1,0 +1,19 @@
+{
+  "source": "High School Level 100Y Breaststroke (Heat 2)",
+  "clip_file": "high school level 100 br 2.mp4.mkv",
+  "clip_timestamp": "0:08",
+  "taxonomy_ids": ["breaststroke-sinking-hips-005", "breaststroke-breath-timing-006"],
+  "quality": "bad",
+  "lanes": [3],
+  "swimmer": "green cap",
+  "competition_level": "high_school",
+  "coach_notes": "Swimmer exits the water too high during the breath, which forces the hips into a very low underwater position — classic seesaw pattern creating significant drag. Excessive torso elevation redirects momentum downward rather than forward.",
+  "affected_phases": ["breakout", "stroke_cycle_entry"],
+  "body_segments": ["torso_elevation", "hip_position"],
+  "camera_angle": "deck_side",
+  "usable_for": ["hip_level", "body_line", "torso_elevation", "breath_height", "seesaw_pattern"],
+  "not_usable_for": ["hand_pitch", "wrist_rotation", "underwater_pull_path"],
+  "burst_fps": 5,
+  "burst_window": "0:06-0:10",
+  "frame_count": 20
+}

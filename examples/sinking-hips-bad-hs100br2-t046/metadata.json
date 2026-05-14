@@ -1,0 +1,19 @@
+{
+  "source": "High School Level 100Y Breaststroke (Heat 2)",
+  "clip_file": "high school level 100 br 2.mp4.mkv",
+  "clip_timestamp": "0:46",
+  "taxonomy_ids": ["breaststroke-sinking-hips-005"],
+  "quality": "bad",
+  "lanes": [2],
+  "swimmer": "red cap",
+  "competition_level": "high_school",
+  "coach_notes": "Hips dropped very low during kick recovery and glide — significant drag and complete loss of horizontal body line. Most pronounced instance of the sinking-hip fault in this clip. Body angle approaches near-vertical at the deepest point.",
+  "affected_phases": ["kick_recovery", "glide"],
+  "body_segments": ["hip_position", "body_line"],
+  "camera_angle": "deck_side",
+  "usable_for": ["hip_level", "body_line", "kick_recovery_position", "seesaw_pattern"],
+  "not_usable_for": ["hand_pitch", "wrist_rotation", "underwater_pull_path"],
+  "burst_fps": 5,
+  "burst_window": "0:44-0:48",
+  "frame_count": 20
+}

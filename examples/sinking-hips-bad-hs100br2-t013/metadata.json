@@ -1,0 +1,19 @@
+{
+  "source": "High School Level 100Y Breaststroke (Heat 2)",
+  "clip_file": "high school level 100 br 2.mp4.mkv",
+  "clip_timestamp": "0:13",
+  "taxonomy_ids": ["breaststroke-sinking-hips-005"],
+  "quality": "bad",
+  "lanes": [1],
+  "swimmer": "red cap",
+  "competition_level": "high_school",
+  "coach_notes": "Hips too low, preventing the chest from clearing the water sufficiently during the breath recovery. Body angle too steep — hip drop disrupts horizontal body line and increases drag through the stroke cycle.",
+  "affected_phases": ["stroke_cycle", "breathing_recovery"],
+  "body_segments": ["hip_position", "torso_elevation"],
+  "camera_angle": "deck_side",
+  "usable_for": ["hip_level", "body_line", "torso_elevation", "breath_height"],
+  "not_usable_for": ["hand_pitch", "wrist_rotation", "underwater_pull_path"],
+  "burst_fps": 5,
+  "burst_window": "0:11-0:15",
+  "frame_count": 20
+}

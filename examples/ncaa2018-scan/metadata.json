@@ -1,0 +1,58 @@
+{
+  "source": "100 Breaststroke — NCAA Division I Championships 2018",
+  "youtube_url": "https://www.youtube.com/watch?v=j3FmBTjbL1U",
+  "clip_file": "NCAA_100br_2018.mp4.webm",
+  "clip_duration_seconds": 55,
+  "clip_offset_in_full_video": "0:18",
+  "full_segment": "0:18-1:13",
+  "camera_angle": "wide_overhead_broadcast",
+  "camera_notes": "Elevated wide-angle deck camera. Multiple lanes visible. Suitable for body line, wake pattern, stroke phase timing, arm width relative to shoulders, and hip-level assessment. NOT suitable for precise elbow angle, wrist rotation, hand pitch, or chin position.",
+  "scan_fps": 1,
+  "total_scan_frames": 55,
+  "stroke": "breaststroke",
+  "competition_level": "ncaa",
+  "flagged_timestamps": [
+    {
+      "clip_time": "0:07",
+      "taxonomy": ["breaststroke-catch-003", "breaststroke-wide-pull-002"],
+      "quality": "mixed",
+      "lanes": [1, 2],
+      "fault_summary": "Lane 1 BAD: catch too wide, hands/elbows past shoulder line. Lane 2 GOOD: clean arm recovery, elbows in front of shoulders."
+    },
+    {
+      "clip_time": "0:09",
+      "taxonomy": ["breaststroke-sinking-hips-005", "breaststroke-breath-timing-006"],
+      "quality": "mixed",
+      "lanes": [1, 3],
+      "fault_summary": "Lane 1 BAD: hips beginning to drop below surface, early seesaw forming. Lane 3 GOOD: controlled downward drive after breath, hips at waterline."
+    },
+    {
+      "clip_time": "0:11",
+      "taxonomy": ["breaststroke-sinking-hips-005"],
+      "quality": "good",
+      "lanes": [3],
+      "fault_summary": "Lane 3 GOOD: body staying horizontal, hips at waterline, head not rising excessively."
+    },
+    {
+      "clip_time": "0:18",
+      "taxonomy": ["breaststroke-catch-003"],
+      "quality": "good",
+      "lanes": [4],
+      "fault_summary": "Lane 4 GOOD: elbows high, early vertical forearm established before pull begins."
+    },
+    {
+      "clip_time": "0:22",
+      "taxonomy": ["breaststroke-sinking-hips-005"],
+      "quality": "good",
+      "lanes": [1, 4],
+      "fault_summary": "Both lanes GOOD: minimal chin rise during breath keeps hips from dropping into seesaw pattern."
+    },
+    {
+      "clip_time": "0:33",
+      "taxonomy": ["breaststroke-catch-003"],
+      "quality": "good",
+      "lanes": [2, 4],
+      "fault_summary": "Both lanes GOOD: strong catch with early vertical forearm, elbows high before pull initiates."
+    }
+  ]
+}

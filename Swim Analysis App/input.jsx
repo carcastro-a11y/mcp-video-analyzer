@@ -52,7 +52,7 @@ function humanSize(bytes) {
 // ----------------------------------------------------------------
 // Input panel — drop zone + URL + tips
 // ----------------------------------------------------------------
-function InputPanel({ file, setFile, url, setUrl, type, setType, mediaPreviewUrl, setMediaPreviewUrl }) {
+function InputPanel({ file, setFile, url, setUrl, type, setType, mediaPreviewUrl, setMediaPreviewUrl, notes, onNotesChange }) {
   const [dragActive, setDragActive] = useState(false);
   const [urlDraft, setUrlDraft] = useState("");
   const fileInputRef = useRef(null);
@@ -159,6 +159,18 @@ function InputPanel({ file, setFile, url, setUrl, type, setType, mediaPreviewUrl
               Load
             </button>
           </div>
+        </div>
+
+        <div className="url-box">
+          <div className="url-box__label">Analysis notes</div>
+          <textarea
+            className="url-box__input"
+            rows={3}
+            style={{ width: "100%", resize: "vertical", lineHeight: 1.5 }}
+            placeholder="Describe the swimmer or what to focus on — e.g. lane 4, blue cap and blue suit; focus on the breathing phase and hip position"
+            value={notes || ""}
+            onChange={(e) => onNotesChange && onNotesChange(e.target.value)}
+          />
         </div>
 
         <div className="tip">

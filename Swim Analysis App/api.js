@@ -14,10 +14,20 @@
     try { return localStorage.getItem(STORAGE_MODEL) || "claude-opus-4-7"; } catch (e) { return "claude-opus-4-7"; }
   }
 
+  // Approximate stroke cycles per second at race pace — mirrors src/tools/analyze-swim-stroke.ts
+  const STROKE_CYCLE_FPS = {
+    breaststroke: 1.2,
+    butterfly: 1.2,
+    backstroke: 1.5,
+    freestyle: 2.0,
+    unknown: 1.5,
+    auto: 1.5
+  };
+
   // ----------------------------------------------------------------
   // Frame extraction from video
   // ----------------------------------------------------------------
-  async function extractFrames(file, count, onProgress) {
+  async function extractFrames(file, count, onProgress, stroke) {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file);
       const video = document.createElement("video");
@@ -32,6 +42,10 @@
 
       video.addEventListener("loadedmetadata", async () => {
         const duration = isFinite(video.duration) ? video.duration : 5;
+        const cycleFps = STROKE_CYCLE_FPS[stroke] ?? 1.5;
+        const strokeBasedCount = Math.ceil(duration * cycleFps);
+        const effectiveCount = Math.min(count, strokeBasedCount);
+
         const w = Math.min(video.videoWidth || 1280, 1280);
         const h = Math.round(w * ((video.videoHeight || 720) / (video.videoWidth || 1280)));
         canvas = document.createElement("canvas");
@@ -39,8 +53,8 @@
         canvas.height = h;
         ctx = canvas.getContext("2d");
 
-        for (let i = 0; i < count; i++) {
-          const t = duration * ((i + 0.5) / count);
+        for (let i = 0; i < effectiveCount; i++) {
+          const t = duration * ((i + 0.5) / effectiveCount);
           try {
             await seekTo(video, t);
             ctx.drawImage(video, 0, 0, w, h);
@@ -51,7 +65,7 @@
               dataUrl
             };
             frames.push(frame);
-            if (onProgress) onProgress(i + 1, count, frame);
+            if (onProgress) onProgress(i + 1, effectiveCount, frame);
           } catch (e) {
             console.warn("seek failed", e);
           }
@@ -79,6 +93,52 @@
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60);
     return `${m}:${sec.toString().padStart(2, "0")}`;
+  }
+
+  // ----------------------------------------------------------------
+  // Browser-based frame dedup — mirrors frame-dedup.ts (dHash equivalent)
+  // Draws each frame to an 8x8 canvas and computes mean per-pixel difference.
+  // Frames where consecutive mean diff < threshold are dropped (near-identical).
+  // ----------------------------------------------------------------
+  function computeFramePixels(dataUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        c.width = 8; c.height = 8;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0, 8, 8);
+        const data = ctx.getImageData(0, 0, 8, 8).data;
+        const gray = [];
+        for (let i = 0; i < data.length; i += 4) {
+          gray.push(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+        }
+        resolve(gray);
+      };
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    });
+  }
+
+  function pixelDistance(a, b) {
+    if (!a || !b) return 255;
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff += Math.abs(a[i] - b[i]);
+    return diff / a.length;
+  }
+
+  async function deduplicateWebFrames(frames, threshold = 8) {
+    if (frames.length <= 1) return frames;
+    const pixels = await Promise.all(frames.map(f => computeFramePixels(f.dataUrl)));
+    const result = [frames[0]];
+    let lastPixels = pixels[0];
+    for (let i = 1; i < frames.length; i++) {
+      if (pixelDistance(lastPixels, pixels[i]) > threshold) {
+        result.push(frames[i]);
+        lastPixels = pixels[i];
+      }
+    }
+    return result;
   }
 
   // ----------------------------------------------------------------
@@ -114,6 +174,7 @@
       stroke: "breaststroke",
       title: "Poor Pull-Kick Timing",
       detectableFrom: ["overhead", "deck_side", "underwater"],
+      focusAreas: ["timing", "kick", "breathing"],
       description: "Pulling and kicking at the same time, or pausing during the breath instead of during the glide. Looks like treading water — lots of movement, very little forward progress.",
       cause: "Anxiety about breathing causes swimmers to rush getting their head up, triggering the kick too early. Also common in people who learned breaststroke casually and never separated the phases.",
       fix: 'Use the cue "Pull… breathe… kick… glide." The pause belongs in the glide, not in the breath.',
@@ -124,6 +185,7 @@
       stroke: "breaststroke",
       title: "Pulling Arms Too Wide (or Too Far Back)",
       detectableFrom: ["deck_side", "underwater"],
+      focusAreas: ["pull_phase", "catch", "arm_entry"],
       description: "Elbows sweep past the shoulders, arms go wide, or hands pull all the way to the hips. Looks powerful but creates a huge frontal area and kills forward momentum.",
       cause: "Swimmers assume bigger movements mean more power. Common in people stronger in freestyle who carry over a long pull habit.",
       fix: "Keep elbows in front of your shoulders at all times. Think of the pull as a heart shape, not a circle.",
@@ -134,6 +196,7 @@
       stroke: "breaststroke",
       title: "Sinking Hips and Poor Body Position",
       detectableFrom: ["overhead", "deck_side", "underwater"],
+      focusAreas: ["hip_position", "body_position", "breathing"],
       description: "Hips sink low every stroke cycle. The body tilts close to vertical during the breath, then crashes back flat. Looks like fighting the water instead of riding on top of it.",
       cause: "Lifting the head too high during the breath (so hips drop to compensate), recovering arms too high above the surface, and weak core engagement.",
       fix: "Keep the breathing motion small. During arm recovery, hands push forward at or just below the surface.",
@@ -144,6 +207,7 @@
       stroke: "breaststroke",
       title: "Breathing at the Wrong Moment",
       detectableFrom: ["overhead", "deck_side"],
+      focusAreas: ["breathing", "timing", "body_position"],
       description: "Head comes up with no arm support after the pull has already finished, so the whole body sinks. Or the swimmer holds their breath the entire cycle and exhales and inhales in one panicked burst.",
       cause: "Fear of not getting enough air. Beginners wait until the head is at its highest point before breathing, which is too late.",
       fix: 'Exhale steadily into the water during the glide. Start the inhale as soon as the outsweep begins. Cue: "Breathe WITH the pull, not AFTER the pull."',
@@ -154,6 +218,7 @@
       stroke: "breaststroke",
       title: "Poor Catch Mechanics",
       detectableFrom: ["deck_side", "underwater"],
+      focusAreas: ["catch", "pull_phase", "arm_entry"],
       description: "Elbows drop below the hands before any propulsive surface is established. Arms sweep too wide or too deep, slipping water rather than holding it. Looks like the arms are pushing down instead of pulling back.",
       cause: "Swimmers extend fully before bending the elbow, missing the early vertical forearm window. Common in people who learned breaststroke without coaching.",
       fix: 'Initiate the catch with the elbow high and outside. The forearm should be near-vertical before the pull begins. Think "elbows up, hands down" at the start of every pull.',
@@ -164,6 +229,7 @@
       stroke: "freestyle",
       title: "Poor Head Position",
       detectableFrom: ["overhead", "deck_side", "underwater"],
+      focusAreas: ["head_position", "body_position", "breathing"],
       description: "Head lifted out of the water with eyes looking forward rather than down. Creates a seesaw effect — raised head at the front forces hips and legs to sink at the back.",
       cause: "Instinct to see where you are going. Anxiety about breathing causes swimmers to lift the head rather than rotate it.",
       fix: "Look at the pool floor, not the wall ahead. One goggle should stay submerged on the breath. Use the bow wave trough to breathe.",
@@ -181,6 +247,11 @@
     return entries;
   }
 
+  function getTaxonomyByFocusAreas(entries, focusAreas) {
+    if (!focusAreas || !focusAreas.length || focusAreas.includes("overall")) return entries;
+    return entries.filter(e => e.focusAreas.some(f => focusAreas.includes(f)));
+  }
+
   function formatTaxonomyForPrompt(entries) {
     if (!entries.length) return "";
     return entries.map(e =>
@@ -195,7 +266,7 @@
   // ----------------------------------------------------------------
   // Dynamic system prompt — camera-angle-aware + taxonomy-injected
   // ----------------------------------------------------------------
-  function buildSystemPrompt(stroke, cameraAngle) {
+  function buildSystemPrompt(stroke, cameraAngle, focus) {
     const base = `You are an expert swimming coach with deep knowledge of competitive technique across freestyle, backstroke, breaststroke, and butterfly. You analyze swimming video frames and photos with the eye of an Olympic-level technical coach.\n` +
       `Be precise about what you observe — reference body position, timing, and mechanics directly.\n` +
       `Structure your feedback clearly with strengths, areas for improvement, and specific drills to fix issues.`;
@@ -243,7 +314,8 @@
         `- Race-pace stroke rate without surface context`;
     }
 
-    const taxonomyEntries = getTaxonomyForStrokeAndAngle(stroke, cameraAngle);
+    const byAngle = getTaxonomyForStrokeAndAngle(stroke, cameraAngle);
+    const taxonomyEntries = getTaxonomyByFocusAreas(byAngle, focus);
     const taxonomySection = formatTaxonomyForPrompt(taxonomyEntries);
 
     const outputFormat = `\n\nAnalyze the provided frames and return your feedback using EXACTLY this markdown structure:\n\n` +
@@ -272,12 +344,15 @@
     const swimmerLine = opts.swimmer
       ? `\nFocus exclusively on the swimmer matching this description: **${opts.swimmer}**. Track this swimmer across all frames using their visible identifiers (lane position, cap colour, suit colour, body size). Ignore all other swimmers in the frame.`
       : "";
+    const notesLine = opts.notes
+      ? `\n\nCoach notes: ${opts.notes}`
+      : "";
     return `Analyze this swimming ${opts.type === "video" ? "video (frames extracted in chronological order)" : "photo"}.
 
 Stroke: ${stroke}
 Focus areas: ${focus}
 Detail level: ${opts.detail || "standard"}
-Camera angle: ${angleLabel}${swimmerLine}
+Camera angle: ${angleLabel}${swimmerLine}${notesLine}
 
 Give specific, technical, actionable feedback. Only comment on what is physically visible from the ${angleLabel} camera angle. Reference what you can actually see in the ${opts.type === "video" ? "frames" : "image"}.`;
   }
@@ -298,7 +373,8 @@ Give specific, technical, actionable feedback. Only comment on what is physicall
         source: { type: "base64", media_type: mediaType, data: base64 }
       });
     } else {
-      for (const frame of opts.frames) {
+      const dedupedFrames = await deduplicateWebFrames(opts.frames, 8).catch(() => opts.frames);
+      for (const frame of dedupedFrames) {
         const parsed = dataUrlToBase64(frame.dataUrl);
         if (!parsed) continue;
         content.push({
@@ -322,7 +398,7 @@ Give specific, technical, actionable feedback. Only comment on what is physicall
       body: JSON.stringify({
         model: model,
         max_tokens: 2000,
-        system: buildSystemPrompt(opts.stroke, opts.cameraAngle),
+        system: buildSystemPrompt(opts.stroke, opts.cameraAngle, opts.focus),
         messages: [{ role: "user", content }]
       })
     });

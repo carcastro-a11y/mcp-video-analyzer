@@ -1,0 +1,19 @@
+{
+  "source": "High School Level 100Y Breaststroke (Heat 2)",
+  "clip_file": "high school level 100 br 2.mp4.mkv",
+  "clip_timestamp": "0:38",
+  "taxonomy_ids": ["breaststroke-sinking-hips-005"],
+  "quality": "bad",
+  "lanes": [3],
+  "swimmer": "green cap",
+  "competition_level": "high_school",
+  "coach_notes": "Head looking straight ahead (eyes at horizon) instead of chin tucked down during the glide/streamline phase. Forward gaze increases frontal drag and disrupts horizontal body line — the same seesaw mechanism as excessive head lift during the breath, applied here to the glide.",
+  "affected_phases": ["glide_streamline_phase"],
+  "body_segments": ["head_neck_alignment"],
+  "camera_angle": "deck_side",
+  "usable_for": ["head_neck_alignment", "gaze_direction", "body_line", "streamline_position"],
+  "not_usable_for": ["hip_depth_precise", "hand_pitch", "underwater_pull_path"],
+  "burst_fps": 5,
+  "burst_window": "0:36-0:40",
+  "frame_count": 20
+}

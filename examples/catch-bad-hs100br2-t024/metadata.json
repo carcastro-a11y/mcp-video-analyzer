@@ -1,0 +1,19 @@
+{
+  "source": "High School Level 100Y Breaststroke (Heat 2)",
+  "clip_file": "high school level 100 br 2.mp4.mkv",
+  "clip_timestamp": "0:24",
+  "taxonomy_ids": ["breaststroke-catch-003"],
+  "quality": "bad",
+  "lanes": [2],
+  "swimmer": "red cap",
+  "competition_level": "high_school",
+  "coach_notes": "Arms not brought low enough during the catch — elbows remain at chest level rather than dropping to the rib cage or lower where an effective early vertical forearm (EVF) position can be established. Pull is initiated too high, causing the arms to push down rather than back.",
+  "affected_phases": ["pull_phase", "catch"],
+  "body_segments": ["elbow_position", "arm_path"],
+  "camera_angle": "deck_side",
+  "usable_for": ["elbow_position", "arm_path", "catch_initiation_height", "pull_plane"],
+  "not_usable_for": ["wrist_rotation", "hand_pitch_precise"],
+  "burst_fps": 5,
+  "burst_window": "0:22-0:26",
+  "frame_count": 20
+}
